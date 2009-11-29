@@ -176,7 +176,7 @@ class Clusterer
   end
   
   def cluster
-      10.times do
+      iterations.times do
           assign_all_points
       end
   end

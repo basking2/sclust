@@ -2,11 +2,12 @@ module SClust
   
 class Document
 
-  attr_reader :terms
+  attr_reader :terms, :userDate
   attr_writer
 
-  def initialize(text="")
+  def initialize(text="", userData=nil)
     @text = text
+    @userData = userData
     
     word_arr = text.split(/[ ,\.\t!\?\(\)\{\}\[\]\r\n]+/m)
 
