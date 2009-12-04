@@ -1,51 +1,91 @@
 module SClust
-  
+    
+# Filters a document term
+class DocumentTermFilter
+    # Return nil if the term should be excluded. Otherwise the version of the term 
+    # that should be included is returned.
+    def filter(term)
+        if ( term.nil? )
+            nil
+        elsif (term.size < 2)
+            nil
+        elsif ( term =~ /^[\d\.]+$/ )
+            nil
+        else
+            term.downcase!
+        end
+    end
+end
+
+class NullFilter
+    def filter(term)
+        term
+    end
+end
+
 class Document
 
-  attr_reader :terms, :userDate
-  attr_writer
+    attr_reader :terms, :userDate, :filter
 
-  def initialize(text="", userData=nil)
-    @text = text
-    @userData = userData
+    # Takes { :userData, :ngrams => [1,2,3], :filter }
+    def initialize(text, opts={})
+        
+        @text = text
+        @userData = opts[:userData]
+
+        opts[:ngramrange] ||= [ 1, 2, 3 ]
+        opts[:filter] ||= DocumentTermFilter.new()
+        
+        word_arr = text.split(/[ ,\.\t!\?\(\)\{\}\[\]\t\r\n]+/m)
     
-    word_arr = text.split(/[ ,\.\t!\?\(\)\{\}\[\]\r\n]+/m)
+        @terms = Hash.new(0)
+        
+        # Array of counts of grams built.
+        builtGramCounts = []
+        
+        # Build a set of n-grams from our requested ngram range.
+        opts[:ngrams].each do |n|
+            
+            builtGramCounts[n] = 0
 
-    @terms = Hash.new(0)
+            # For each word in our list...
+            0.upto(word_arr.length-1) do |j| 
+                
+                if ( n + j < word_arr.length )
+                    
+                    term = word_arr[j]
 
-    0.upto(2) do |n|
+                    (n-1).times { |ngram| term += " #{word_arr[j+ngram+1]}" }
+                    
+                end
 
-      0.upto(word_arr.length-1) do |j| 
+                term = opts[:filter].filter(term)
+                
+                @terms[term] += 1.0 if term
+                
+                builtGramCounts[n] += 1
 
-        n = ( word_arr.length - j - 1 ) if ( n + j >= word_arr.length ) 
+            end
+            
+        end
 
-        term = word_arr[j]
-
-        1.upto(n) { |ngram| term += " #{word_arr[j+ngram]}" }
-
-        @terms[term] += 1.0
-
-      end
+        @terms.each { |k,v| @terms[k] /= @terms.length }
 
     end
-
-    @terms.each { |k,v| @terms[k] /= @terms.length }
-
-  end
   
-  def term_frequency(term)
-      @terms[term]
-  end
+    def term_frequency(term)
+        @terms[term]
+    end
   
-  alias tf term_frequency
+    alias tf term_frequency
 
-  def each_term(&call) 
-    terms.each_key { |k| yield k }
-  end
+    def each_term(&call) 
+        terms.each_key { |k| yield k }
+    end
 
-  def has_term?(term)
-    @terms.has_key?(term)
-  end
+    def has_term?(term)
+        @terms.has_key?(term)
+    end
 
 end
 

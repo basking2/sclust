@@ -6,10 +6,11 @@ class ClusterTest < Test::Unit::TestCase
     
     def setup()
         @dc = SClust::DocumentCollection.new()
-        d1 = SClust::Document.new("a b c d d e a q a b") 
-        d2 = SClust::Document.new("a b d e a")
-        d3 = SClust::Document.new("bob")
-        d4 = SClust::Document.new("frank a")
+        filter = SClust::NullFilter.new()
+        d1 = SClust::Document.new("a b c d d e a q a b", :filter=>filter, :ngrams=>[1]) 
+        d2 = SClust::Document.new("a b d e a", :filter=>filter, :ngrams=>[1])
+        d3 = SClust::Document.new("bob", :filter=>filter, :ngrams=>[1])
+        d4 = SClust::Document.new("frank a", :filter=>filter, :ngrams=>[1])
     
         @dc + d1
         @dc + d2

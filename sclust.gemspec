@@ -15,7 +15,8 @@ Gem::Specification.new do |spec|
     spec.require_paths = [ 'lib' ]
     spec.files = FileList[ 'lib/**/*.rb' ].to_a
     spec.add_dependency('log4r', '>=1.0.5')
-    spec.add_dependency('sources', '>=0.0.1')
+    #spec.add_dependency('sources', '>=0.0.1')
+    spec.add_dependency('mechanize', '>=0.9.3') # Required for blog clustering script.
     spec.test_files = FileList[ 'tests/*rb', 'tests/**/*.rb' ] .to_a
     spec.has_rdoc = true
 end

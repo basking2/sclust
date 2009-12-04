@@ -1,6 +1,11 @@
+require 'rubygems'
+require 'log4r'
+
 module SClust
 
 class CosineDistance
+    
+    # Given two vectors, compute the distance
     def self.distance(a,b)
 
         acc1 = 0.0
@@ -38,7 +43,7 @@ class ClusterPoint
     # Weght is a value from 0.0 - 1.0, inclusive. A value of 1 means that this clusterPoint is 100% assigned to
     # this cluster point while a weight value of 0 will have no effect.
     def add(clusterPoint, weight)
-        0.upto(@values.length-1) { |i| @values[i] = ( @values[i] * (1-weight)) + (clusterPoint.values[i] * weight) }
+        @values.length.times { |i| @values[i] = ( @values[i] * (1-weight)) + (clusterPoint.values[i] * weight) }
         
         # Validation code
         #0.upto(@values.length-1) do |i|
@@ -51,7 +56,7 @@ class ClusterPoint
   
     # Similar to add, but subtract.
     def sub(clusterPoint, weight)
-        0.upto(@values.length-1) { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / (1 - weight) }
+        @values.length.times { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / (1 - weight) }
 
         # Validation code
         #0.upto(@values.length-1) do |i|
@@ -61,23 +66,37 @@ class ClusterPoint
         #end
     end
     
+    # Return the top n words. Return all the terms sorted if n is 0.
     def get_max_terms(n=3)
         
-        values = {}
-        
-        0.upto(@terms.length-1) do |i|
+        values_to_terms = {}
+
+        @terms.length.times do |i|
             t = @terms[i]
             v = @values[i]
-            values[v] = [] unless values.has_key?(v)
-            values[v] << t
+            values_to_terms[v] ||= [] 
+            values_to_terms[v] << t
         end
         
-        vlist = values.keys.sort { |x,y|  ( x > y ) ? -1 : 1 }
-        
+        sorted_values = values_to_terms.keys.sort { |x,y|  ( x > y ) ? -1 : 1 }
+
         result = []
         
-        0.upto(n-1) { |i| result += values[vlist[i]] }
+        n = @terms.length if ( n > @terms.length || n == 0)
         
+        catch(:haveEnough) do
+            
+            sorted_values.each do |value|
+            
+                result += values_to_terms[value]
+                
+                throw :haveEnough if result.length >= n
+                
+            end
+            
+        end
+        
+        # Trim our results to exactly the requested size.
         result.slice(0,n)
         
     end
@@ -131,52 +150,93 @@ end
 
 class Clusterer
     
-    attr_reader :clusters, :points, :cluster_count, :iterations
+    attr_reader :clusters, :points, :cluster_count, :iterations, :logger
     attr_writer :clusters, :points, :cluster_count, :iterations
 
-  def initialize(points)
-    @iterations    = 2
-    @cluster_count = 10
-    @points        = points
-    @clusters      = []
+    # Optionally takes a notifier.
+    def initialize(points)
+        @iterations    = 2
+        @cluster_count = 0
+        @points        = points
+        @clusters      = []
+        @logger        = Log4r::Logger.new('Clusterer')
+    
+        # Randomly select a few starting documents.
+        build_empty_clusters('crp')
+    end
+    
+    # Drop all existing clusters and recreate them using the given method.
+    # If the given method is an integer, then that many clusters are created
+    # and the centers are randomly chosen from the documents contained in the @points attribute.
+    # If it is CRP, then the Chinese Resteraunt Process is used, considering each document
+    # and creating a cluster with that document as the center stochastically and proportionally
+    # the number of documents already considered.
+    def build_empty_clusters(process)
+        
+        @clusters = []
+        
+        if ( process.instance_of?(Integer))
+            @logger.info("Building cluster of constant cluster count #{process}.")
+            @cluster_count = process
+            @cluster_count.times { @clusters << Cluster.new(@points[rand(points.length)]) }
+            
+        elsif(process.instance_of?(String))
+            if ( process == "crp" )
+                
+                @logger.info("Building clusters using CRP.")
+                
+                1.upto(@points.length) do |i|
 
-    # Randomly select a few starting documents.
-    @cluster_count.times { @clusters << Cluster.new(@points[rand(points.length)]) }
-  end
+                    @cluster_count = 0
 
-  def +(point)
-    @points << point
-  end
+                    if ( rand(i) == 0 )
+                        @clusters << Cluster.new(@points[i-1])
+                        @cluster_count += 1
+                    end
+                    
+                end
+                
+                @logger.info("Built #{@cluster_count} clusters.")
+            end
+        end
+    end
+
+    def +(point)
+        @points << point
+    end
   
     def each_cluster(&c)
         @clusters.each { |cluster| yield cluster }
     end
         
-  def assign_all_points
+    def assign_all_points
   
-    @points.each do |pt|
+        @points.each do |pt|
+            
+            @logger.debug("Assigning point #{pt}.")
       
-      min_cluster = @clusters[0]
-      min_dst = min_cluster.center.distance(pt)
+            min_cluster = @clusters[0]
+            min_dst = min_cluster.center.distance(pt)
     
-      @clusters.each do |cluster|
-    
-        tmp_distance = cluster.center.distance(pt)
-    
-        if ( tmp_distance < min_dst )
-          min_cluster = cluster
-          min_dst = tmp_distance
-        end
-      end
+            @clusters.each do |cluster|
+        
+                tmp_distance = cluster.center.distance(pt)
+        
+                if ( tmp_distance < min_dst )
+                    min_cluster = cluster
+                    min_dst = tmp_distance
+                end
+            end
 
-      pt.cluster - pt if pt.cluster
-    
-      min_cluster + pt
+            pt.cluster - pt if pt.cluster
+        
+            min_cluster + pt
+        end
     end
-  end
   
   def cluster
-      iterations.times do
+      iterations.times do |i|
+          @logger.info("Starting iteration #{i+1} of #{iterations}.")
           assign_all_points
       end
   end
