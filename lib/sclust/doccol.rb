@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'log4r'
 
+require 'sclust/sparse_vector'
+
 module SClust
 class DocumentCollection 
 
@@ -15,7 +17,7 @@ class DocumentCollection
     
     def initialize()
         @logger = Log4r::Logger.new("SClust::DocumentCollection")
-        @terms   = Hash.new(0)
+        @terms   = SparseVector.new(0)
         @doclist = []
     end
 

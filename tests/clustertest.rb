@@ -27,24 +27,9 @@ class ClusterTest < Test::Unit::TestCase
         c.cluster
         
         c.each_cluster do |cl|
-            
-            max = 0
-            
-            0.upto(cl.center.terms.length - 1) do |i|
-                
-                term  = cl.center.terms[i]
-                value = cl.center.values[i]
-                
-                max = i if ( cl.center.values[i] > cl.center.values[max] )    
-            end
-            
-            puts("Cluster: #{cl.center.terms[max]} #{cl.center.values[max]}")
-                        
             cl.center.get_max_terms(3).each do |t|
                 puts("Got Term: #{t} with value #{cl.center.get_term_value(t)}")
             end
-            
-            assert(cl.center.values[max] == cl.center.get_term_value(cl.center.get_max_terms(1)[0]), "Max value was not found.")
         end
     end
 

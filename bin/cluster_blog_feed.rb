@@ -154,9 +154,11 @@ config[:urlHashes].each do |url|
 end
 
 #col.drop_terms(0.0001, 0.10) # Removed 14 words
-col.drop_terms(0.0001, 0.05)
+#col.drop_terms(0.0001, 0.05)
 
 cluster = SClust::DocumentClusterer.new(col)
+
+cluster.iterations=3
 
 cluster.logger.outputters = $logger.outputters
 
@@ -165,7 +167,7 @@ cluster.cluster()
 cluster.each_cluster do |cluster| 
     puts("---------- Cluster #{cluster} ---------- ")
     cluster.get_max_terms(config[:topTerms]).each do |term|
-        print("\tTerm:("+term+")")
+        print("\tTerm:(#{term}=#{cluster.center.values[term]})")
     end
     puts("")
 end

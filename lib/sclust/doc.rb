@@ -33,7 +33,7 @@ class Document
         @text = text
         @userData = opts[:userData]
 
-        opts[:ngramrange] ||= [ 1, 2, 3 ]
+        opts[:ngrams] ||= [ 1, 2, 3 ]
         opts[:filter] ||= DocumentTermFilter.new()
         
         word_arr = text.split(/[ ,\.\t!\?\(\)\{\}\[\]\t\r\n]+/m)

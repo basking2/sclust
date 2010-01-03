@@ -24,15 +24,14 @@ end
 
 class ClusterPoint
 
-    attr_reader :terms, :values, :cluster, :source_object
+    attr_reader :values, :cluster, :source_object
     attr_writer :cluster, :source_object
 
-    # Initialize the ClusterPoint with a list of terms (labels, objects, whatever) and numeric values.
-    def initialize(terms, values, source_object = nil)
-      @terms   = terms
-      @values  = values
-      @cluster = nil
-      @source_object = source_object
+    # Initialize the ClusterPoint with a SparseVector or SparseLabeledVector.
+    def initialize(sparse_vector, source_object = nil)
+        @values  = sparse_vector
+        @cluster = nil
+        @source_object = source_object
     end
 
     def distance(clusterPoint)
@@ -71,9 +70,8 @@ class ClusterPoint
         
         values_to_terms = {}
 
-        @terms.length.times do |i|
-            t = @terms[i]
-            v = @values[i]
+        @values.each_key do |t|
+            v = @values[t]
             values_to_terms[v] ||= [] 
             values_to_terms[v] << t
         end
@@ -82,7 +80,7 @@ class ClusterPoint
 
         result = []
         
-        n = @terms.length if ( n > @terms.length || n == 0)
+        n = @values.length if ( n > @values.length || n == 0)
         
         catch(:haveEnough) do
             
@@ -102,16 +100,7 @@ class ClusterPoint
     end
     
     def get_term_value(term)
-        i=0
-        
-        catch(:found) do
-            @terms.each do |t|
-                throw :found if ( t == term )
-                i+=1
-            end
-        end
-        
-        @values[i]
+        @values[term]
     end
         
 end
@@ -213,7 +202,7 @@ class Clusterer
   
         @points.each do |pt|
             
-            @logger.debug("Assigning point #{pt}.")
+            #@logger.debug("Assigning point #{pt}.")
       
             min_cluster = @clusters[0]
             min_dst = min_cluster.center.distance(pt)
