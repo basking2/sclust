@@ -1,7 +1,17 @@
+require 'rubygems'
+require 'stemmer'
+
 module SClust
     
 # Filters a document term
 class DocumentTermFilter
+    
+    @@stopwords = %w(
+        and
+        the
+        )
+        
+    
     # Return nil if the term should be excluded. Otherwise the version of the term 
     # that should be included is returned.
     def filter(term)
@@ -11,8 +21,10 @@ class DocumentTermFilter
             nil
         elsif ( term =~ /^[\d\.]+$/ )
             nil
+        elsif @@stopwords.member?(term)
+            nil
         else
-            term.downcase!
+            term.downcase.stem
         end
     end
 end
