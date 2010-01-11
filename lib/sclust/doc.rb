@@ -1,40 +1,6 @@
-require 'rubygems'
-require 'stemmer'
-
+require 'sclust/filters'
 module SClust
     
-# Filters a document term
-class DocumentTermFilter
-    
-    @@stopwords = %w(
-        and
-        the
-        )
-        
-    
-    # Return nil if the term should be excluded. Otherwise the version of the term 
-    # that should be included is returned.
-    def filter(term)
-        if ( term.nil? )
-            nil
-        elsif (term.size < 2)
-            nil
-        elsif ( term =~ /^[\d\.]+$/ )
-            nil
-        elsif @@stopwords.member?(term)
-            nil
-        else
-            term.downcase.stem
-        end
-    end
-end
-
-class NullFilter
-    def filter(term)
-        term
-    end
-end
-
 class Document
 
     attr_reader :terms, :userDate, :filter
