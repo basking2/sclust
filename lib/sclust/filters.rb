@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'stemmer'
 require 'sclust/stopwords'
+require 'nokogiri'
 
 module SClust
     
@@ -43,7 +44,7 @@ module SClust
     
     class StemFilter < Filter
         def filter(term)
-            term.stem
+            term.downcase.stem
         end
     end
     
@@ -63,11 +64,39 @@ module SClust
         end
     end
     
+    
+    class TokenizerFilter < Filter
+        def filter(document)
+            document.split(/[\s,\.\t!\?\(\)\{\}\[\]\t\r\n]+/m)
+        end
+    end
+    
+    class HTMLFilter < Filter
+        def filter(doc)
+            Nokogiri::HTML::DocumentFragment.parse(doc).text
+        end
+    end
+    
+    class LowercaseFilter < Filter
+        def filter(term)
+            term.downcase
+        end
+    end
+    
+    # A tokenizer that applies a few overall document filters.
+    class DocumentTokenizer < TokenizerFilter
+        def initialize()
+            super()
+            after(HTMLFilter.new())
+        end
+    end
+    
     # Filters a document term
     class DocumentTermFilter < Filter
 
         def initialize()
             super()
+            after(LowercaseFilter.new())
             after(StemFilter.new())
             after(StopwordFilter.new())
         end
@@ -78,7 +107,7 @@ module SClust
             if ( term =~ /^[\d\.]+$/ )
                 nil
             else
-                term.stem
+                term
             end
         end
     end

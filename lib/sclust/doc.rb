@@ -14,8 +14,10 @@ class Document
         opts[:ngrams] ||= [ 1, 2, 3 ]
         opts[:filter] ||= DocumentTermFilter.new()
         
-        word_arr = text.split(/[ ,\.\t!\?\(\)\{\}\[\]\t\r\n]+/m)
-    
+        opts[:tokenizer] ||= SClust::DocumentTokenizer.new()
+        
+        word_arr = opts[:tokenizer].apply(text)
+
         @terms = Hash.new(0)
         
         # Array of counts of grams built.
@@ -25,7 +27,7 @@ class Document
         opts[:ngrams].each do |n|
             
             builtGramCounts[n] = 0
-
+            
             # For each word in our list...
             0.upto(word_arr.length-1) do |j| 
                 
@@ -38,9 +40,9 @@ class Document
                 end
 
                 term = opts[:filter].apply(term)
-                
+
                 @terms[term] += 1.0 if term
-                
+        
                 builtGramCounts[n] += 1
 
             end
