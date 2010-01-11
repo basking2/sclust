@@ -14,7 +14,7 @@ module SClust
             catch(:filtered_term) do
                 @previous_filters.each { |f| term = f.filter(term) ; throw :filtered_term if term.nil? }
                 
-                term = apply(term) ; throw :filtered_term if term.nil?
+                term = filter(term) ; throw :filtered_term if term.nil?
                 
                 @succeeding_filters.each { |f| term = f.filter(term) ; throw :filtered_term if term.nil? }
             end
@@ -62,6 +62,7 @@ module SClust
     class DocumentTermFilter < Filter
 
         def initialize()
+            super()
             after(StemFilter.new())
             after(StopwordFilter.new())
         end
@@ -70,8 +71,6 @@ module SClust
         # that should be included is returned.
         def filter(term)
             if ( term =~ /^[\d\.]+$/ )
-                nil
-            elsif @@stopwords.member?(term)
                 nil
             else
                 term.downcase.stem
