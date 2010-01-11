@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'stemmer'
+require 'sclust/stopwords'
 
 module SClust
     
@@ -11,12 +12,15 @@ module SClust
         
         def apply(term)
             
-            catch(:filtered_term) do
-                @previous_filters.each { |f| term = f.filter(term) ; throw :filtered_term if term.nil? }
+            if ( term )
                 
-                term = filter(term) ; throw :filtered_term if term.nil?
-                
-                @succeeding_filters.each { |f| term = f.filter(term) ; throw :filtered_term if term.nil? }
+                catch(:filtered_term) do
+                    @previous_filters.each { |f| term = f.filter(term) ; throw :filtered_term if term.nil? }
+                    
+                    term = filter(term) ; throw :filtered_term if term.nil?
+                    
+                    @succeeding_filters.each { |f| term = f.filter(term) ; throw :filtered_term if term.nil? }
+                end
             end
             
             term
@@ -45,18 +49,19 @@ module SClust
     
     class StopwordFilter < Filter
         
+        include SClust::StopwordList
+
+        stemmer = StemFilter.new()
+
         @@stopwords = {}
         
-        %w(
-            and
-            the
-        ).each { |term| @@stopwords[term] = 1 }
-        
+        @@stopword_list.each { |term| @@stopwords[stemmer.apply(term)] = 1 }
+
+            
         def filter(term)
             ( @@stopwords[term] ) ? nil : term
         end
     end
-    
     
     # Filters a document term
     class DocumentTermFilter < Filter
@@ -73,7 +78,7 @@ module SClust
             if ( term =~ /^[\d\.]+$/ )
                 nil
             else
-                term.downcase.stem
+                term.stem
             end
         end
     end

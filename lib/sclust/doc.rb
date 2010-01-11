@@ -37,7 +37,7 @@ class Document
                     
                 end
 
-                term = opts[:filter].filter(term)
+                term = opts[:filter].apply(term)
                 
                 @terms[term] += 1.0 if term
                 
