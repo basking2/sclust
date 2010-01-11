@@ -165,7 +165,7 @@ cluster.cluster()
 cluster.each_cluster do |cluster| 
     puts("---------- Cluster #{cluster} ---------- ")
     cluster.get_max_terms(config[:topTerms]).each do |term|
-        print("\tTerm:(#{term}=#{cluster.center.values[term]})")
+        print("\tTerm:(#{term.original_word}=#{cluster.center.values[term]})")
     end
     puts("")
 end

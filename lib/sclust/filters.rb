@@ -6,6 +6,18 @@ require 'nokogiri'
 module SClust
     
     class Filter
+        class StemmedWord < String
+            
+            attr_reader :original_word
+            
+            def initialize(stemmed_word, original_word)
+                super(stemmed_word)
+                
+                @original_word = String.new(original_word)
+                
+            end
+        end
+        
         def initialize(prev=nil)
             @previous_filters = (prev)? [ prev ] : []
             @succeeding_filters = []
@@ -44,7 +56,13 @@ module SClust
     
     class StemFilter < Filter
         def filter(term)
-            term.downcase.stem
+            Filter::StemmedWord.new(term.stem, term)
+        end
+    end
+    
+    class LowercaseFilter < Filter
+        def filter(term)
+            term.downcase
         end
     end
     
@@ -52,11 +70,11 @@ module SClust
         
         include SClust::StopwordList
 
-        stemmer = StemFilter.new()
-
+        filter = LowercaseFilter.new()
+        
         @@stopwords = {}
         
-        @@stopword_list.each { |term| @@stopwords[stemmer.apply(term)] = 1 }
+        @@stopword_list.each { |term| @@stopwords[filter.apply(term)] = true }
 
             
         def filter(term)
@@ -77,12 +95,6 @@ module SClust
         end
     end
     
-    class LowercaseFilter < Filter
-        def filter(term)
-            term.downcase
-        end
-    end
-    
     # A tokenizer that applies a few overall document filters.
     class DocumentTokenizer < TokenizerFilter
         def initialize()
@@ -97,8 +109,8 @@ module SClust
         def initialize()
             super()
             after(LowercaseFilter.new())
-            after(StemFilter.new())
             after(StopwordFilter.new())
+            after(StemFilter.new())
         end
         
         # Return nil if the term should be excluded. Otherwise the version of the term 
