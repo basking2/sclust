@@ -42,8 +42,8 @@ class ClusterPoint
     # Weght is a value from 0.0 - 1.0, inclusive. A value of 1 means that this clusterPoint is 100% assigned to
     # this cluster point while a weight value of 0 will have no effect.
     def add(clusterPoint, weight)
-        @values.length.times { |i| @values[i] = ( @values[i] * (1-weight)) + (clusterPoint.values[i] * weight) }
-        
+        #@values.length.times { |i| @values[i] = ( @values[i] * (1-weight)) + (clusterPoint.values[i] * weight) }
+        clusterPoint.values.keys.each { |i| @values[i] = ( @values[i] * (1-weight) ) + (clusterPoint.values[i] * weight)}
         # Validation code
         #0.upto(@values.length-1) do |i|
         #    if ( @values[i].nan? || ! @values[i].finite? ) 
@@ -55,8 +55,8 @@ class ClusterPoint
   
     # Similar to add, but subtract.
     def sub(clusterPoint, weight)
-        @values.length.times { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / (1 - weight) }
-
+        #@values.length.times { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / (1 - weight) }
+        clusterPoint.values.keys.each { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / ( 1 - weight ) }
         # Validation code
         #0.upto(@values.length-1) do |i|
         #    if ( @values[i].nan? || ! @values[i].finite? ) 
@@ -70,8 +70,7 @@ class ClusterPoint
         
         values_to_terms = {}
 
-        @values.each_key do |t|
-            v = @values[t]
+        @values.each do |t, v|
             values_to_terms[v] ||= [] 
             values_to_terms[v] << t
         end
@@ -80,7 +79,7 @@ class ClusterPoint
 
         result = []
         
-        n = @values.length if ( n > @values.length || n == 0)
+        #n = @values.length if ( n > @values.length || n == 0)
         
         catch(:haveEnough) do
             
@@ -140,11 +139,11 @@ end
 class Clusterer
     
     attr_reader :clusters, :points, :cluster_count, :iterations, :logger
-    attr_writer :clusters, :points, :cluster_count, :iterations
+    attr_writer :clusters, :points, :cluster_count, :iterations, :logger
 
     # Optionally takes a notifier.
     def initialize(points)
-        @iterations    = 2
+        @iterations    = 3
         @cluster_count = 0
         @points        = points
         @clusters      = []
@@ -164,7 +163,7 @@ class Clusterer
         
         @clusters = []
         
-        if ( process.instance_of?(Integer))
+        if ( process.is_a?(Integer))
             @logger.info("Building cluster of constant cluster count #{process}.")
             @cluster_count = process
             @cluster_count.times { @clusters << Cluster.new(@points[rand(points.length)]) }
@@ -203,7 +202,7 @@ class Clusterer
         @points.each do |pt|
             
             #@logger.debug("Assigning point #{pt}.")
-      
+
             min_cluster = @clusters[0]
             min_dst = min_cluster.center.distance(pt)
     

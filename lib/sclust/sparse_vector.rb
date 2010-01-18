@@ -8,11 +8,16 @@ module SClust
     class SparseVector < Hash
         
         def initialize(default_value=nil)
+            super(default_value)
             @default_value = default_value
         end
         
         def store(key, value)
-            super(key, value) unless value == @default_value
+            if ( @defaultValue == value)
+                delete(key) if ( member?(key) )
+            else
+                super(key, value)
+            end
         end
         
         def [](key)

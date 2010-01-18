@@ -6,16 +6,28 @@ require 'nokogiri'
 module SClust
     
     class Filter
-        class StemmedWord < String
+        class StemmedWord 
             
-            attr_reader :original_word
+            attr_reader :original_word, :stemmed_word
+            attr_writer :original_word, :stemmed_word
             
             def initialize(stemmed_word, original_word)
-                super(stemmed_word)
-                
+                #super(stemmed_word)
+                @stemmed_word = stemmed_word
                 @original_word = String.new(original_word)
-                
+
             end
+            
+            def initialize_copy(s)
+                super(s)
+                
+                if ( stemmed_word.class == "SClust::Filter::StemmedWord" )
+                    @original_word = s.original_word
+                end
+            end
+            
+            def to_s() @stemmed_word end
+            
         end
         
         def initialize(prev=nil)

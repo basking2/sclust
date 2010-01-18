@@ -156,7 +156,9 @@ end
 
 cluster = SClust::DocumentClusterer.new(col)
 
-cluster.iterations=3
+cluster.build_empty_clusters(10)
+
+cluster.iterations=5
 
 cluster.logger.outputters = $logger.outputters
 
