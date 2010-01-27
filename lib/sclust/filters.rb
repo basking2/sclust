@@ -50,7 +50,34 @@ module SClust
                 end
             end
             
-            def to_s() @stemmed_word end
+            def to_s() 
+                @stemmed_word 
+            end
+               
+            def < (sw)
+                @stemmed_word< sw.stemmed_word
+            end
+            
+            def < (sw)
+                @stemmed_word> sw.stemmed_word
+            end
+            def ==(sw)
+                @stemmed_word == sw.stemmed_word
+            end
+            
+            def <=>(sw)
+                @stemmed_word <=> sw.stemmed_word
+            end
+            
+            def +(sw)
+                if ( sw.nil?)
+                    self
+                elsif (sw.is_a?(String) )
+                    StemmedWord.new(@stemmed_word + sw, @original_word + sw)
+                else
+                    StemmedWord.new(@stemmed_word + sw.stemmed_word, @original_word + sw.original_word)
+                end
+            end
             
         end
         
@@ -112,16 +139,21 @@ module SClust
         
         @@stopword_list.each { |term| @@stopwords[filter.apply(term)] = true }
 
-            
         def filter(term)
             ( @@stopwords[term] ) ? nil : term
+        end
+    end
+    
+    class TrimWhitespace < Filter
+        def filter(term)
+            term.chomp.sub(/^\s*/, '').sub(/\s*$/, '')
         end
     end
     
     
     class TokenizerFilter < Filter
         def filter(document)
-            document.split(/[\s,\.\t!\?\(\)\{\}\[\]\t\r\n]+/m)
+            document.split(/[\s,\.\t!\?\(\)\{\}\[\]\t\r\n";':]+/m)
         end
     end
     
@@ -146,6 +178,7 @@ module SClust
             super()
             after(LowercaseFilter.new())
             after(StopwordFilter.new())
+            after(TrimWhitespace.new())
             after(StemFilter.new())
         end
         
