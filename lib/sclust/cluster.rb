@@ -36,13 +36,16 @@ class CosineDistance
         acc2 = 0.0
         acc3 = 0.0
         
-        0.upto(a.length-1) do |i| 
+        a.merge(b).keys.each do |i|
             acc1 += a[i]*b[i] 
-            acc2 *= a[i]*a[i]
-            acc3 *= b[i]*b[i]
+            acc2 += a[i]*a[i]
+            acc3 += b[i]*b[i]
         end
         
-        1 - ( acc1 / (Math.sqrt(acc2) * Math.sqrt(acc3)) )
+        v = 1 - ( acc1 / (Math.sqrt(acc2) * Math.sqrt(acc3)) )
+        
+        # Return nil if we detect no distance between documents.
+        (v==1)? nil : v
     end
 end
 
@@ -66,27 +69,13 @@ class ClusterPoint
     # Weght is a value from 0.0 - 1.0, inclusive. A value of 1 means that this clusterPoint is 100% assigned to
     # this cluster point while a weight value of 0 will have no effect.
     def add(clusterPoint, weight)
-        #@values.length.times { |i| @values[i] = ( @values[i] * (1-weight)) + (clusterPoint.values[i] * weight) }
-        clusterPoint.values.keys.each { |i| @values[i] = ( @values[i] * (1-weight) ) + (clusterPoint.values[i] * weight)}
-        # Validation code
-        #0.upto(@values.length-1) do |i|
-        #    if ( @values[i].nan? || ! @values[i].finite? ) 
-        #        throw Exception.new("Cluster has invalid number #{@values[i]}")
-        #    end
-        #end
+        @values.merge(clusterPoint.values).keys.each { |i| @values[i] = ( @values[i] * (1-weight) ) + (clusterPoint.values[i] * weight)}
     end
 
   
     # Similar to add, but subtract.
     def sub(clusterPoint, weight)
-        #@values.length.times { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / (1 - weight) }
-        clusterPoint.values.keys.each { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / ( 1 - weight ) }
-        # Validation code
-        #0.upto(@values.length-1) do |i|
-        #    if ( @values[i].nan? || ! @values[i].finite? ) 
-        #        throw Exception.new("Cluster has invalid number #{@values[i]} w:#{weight} and #{clusterPoint.values[i]}")
-        #    end
-        #end
+        @values.merge(clusterPoint.values).keys.each { |i| @values[i] = ( @values[i] - (clusterPoint.values[i] * weight) ) / ( 1 - weight ) }
     end
     
     # Return the top n words. Return all the terms sorted if n is 0.
@@ -192,7 +181,15 @@ class Clusterer
             @cluster_count = process
             @cluster_count.times { @clusters << Cluster.new(@points[rand(points.length)]) }
             
-        elsif(process.instance_of?(String))
+            #@clusters.each do |cluster|
+            #    puts("---------- Cluster #{cluster} ---------- ")
+            #    cluster.get_max_terms(100).each do |term|
+            #        print("\tTerm:(#{term.original_word}=#{cluster.center.values[term]})")
+            #    end
+            #    puts("")
+            #end
+            
+        elsif(process.is_a?(String))
             if ( process == "crp" )
                 
                 @logger.info("Building clusters using CRP.")
@@ -227,22 +224,46 @@ class Clusterer
             
             #@logger.debug("Assigning point #{pt}.")
 
-            min_cluster = @clusters[0]
-            min_dst = min_cluster.center.distance(pt)
+            # Randomize the first selection to ensure that in the case where there are 
+            # many centers that are close, each has a (statistically) equal chance of
+            # getting the document, thus moving the center, changing the center,
+            # and perhaps matching other documents better because of more terms.
+            min_cluster = @clusters[rand(@clusters.length)]
+            min_dst     = min_cluster.center.distance(pt)
     
             @clusters.each do |cluster|
         
                 tmp_distance = cluster.center.distance(pt)
-        
-                if ( tmp_distance < min_dst )
+                
+                if tmp_distance.nil?
+                    next
+                    
+                elsif min_dst.nil?
+                    min_dst = tmp_distance 
+                    min_cluster = cluster
+                    
+                elsif tmp_distance < min_dst
                     min_cluster = cluster
                     min_dst = tmp_distance
+                    
                 end
             end
+            
+            # If a point has a center...
+            if pt.cluster
 
-            pt.cluster - pt if pt.cluster
-        
-            min_cluster + pt
+                # If it is not the same cluster...
+                unless pt.cluster.equal? min_cluster
+                    pt.cluster  - pt
+                    min_cluster + pt
+                end
+            else
+                min_cluster + pt
+            end
+
+            #pt.cluster  - pt if pt.cluster
+            
+            #min_cluster + pt
         end
     end
   
