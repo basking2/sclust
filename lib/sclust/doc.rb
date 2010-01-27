@@ -29,7 +29,7 @@ class Document
 
     attr_reader :terms, :userDate, :filter
 
-    # Takes { :userData, :ngrams => [1,2,3], :filter }
+    # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
     def initialize(text, opts={})
         
         @text = text
@@ -37,10 +37,11 @@ class Document
 
         opts[:ngrams] ||= [ 1, 2, 3 ]
         opts[:filter] ||= DocumentTermFilter.new()
-        
         opts[:tokenizer] ||= SClust::DocumentTokenizer.new()
         
-        word_arr = opts[:tokenizer].apply(text)
+        word_arr = opts[:tokenizer].apply(text).map { |word| 
+            opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
+        
 
         @terms = Hash.new(0)
         
@@ -53,20 +54,19 @@ class Document
             builtGramCounts[n] = 0
             
             # For each word in our list...
-            0.upto(word_arr.length-1) do |j| 
+            word_arr.length.times do |j| 
                 
                 if ( n + j < word_arr.length )
                     
                     term = word_arr[j]
-
-                    (n-1).times { |ngram| term += " #{word_arr[j+ngram+1]}" }
+                    
+                    # Pick number of iterations based on how close to the end of the array we are.
+                    (( ( word_arr.length > n+j)?n:word_arr.length-j)-1).times { |ngram| term += " #{word_arr[j+ngram+1]}" }
                     
                 end
 
-                term = opts[:filter].apply(term)
-
                 @terms[term] += 1.0 if term
-        
+                
                 builtGramCounts[n] += 1
 
             end
@@ -74,6 +74,12 @@ class Document
         end
 
         @terms.each { |k,v| @terms[k] /= @terms.length }
+        
+        if opts.key?(:term_limit) and opts[:term_limit]
+            new_terms = Hash.new(0)
+            @terms.keys.sort {|x,y| -(x <=> y) }[0..opts[:term_limit].to_i].each { |key| new_terms[key] = @terms[key] }
+            @terms=new_terms
+        end
 
     end
   
