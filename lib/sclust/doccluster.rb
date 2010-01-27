@@ -44,7 +44,6 @@ class DocumentClusterer < Clusterer
             # Buid a BIG term vector list for this document.
             doc.terms.each_key do |term|
                 doc_terms[term] = doc.tf(term) - documentCollection.idf(term)
-                #puts("TERM:#{term} #{doc.tf(term)} #{documentCollection.idf(term)} #{doc.tf(term) - documentCollection.idf(term)}")
             end
             
             # def initialize(terms, values, source_object = nil)

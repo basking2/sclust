@@ -37,8 +37,9 @@ module SClust
         end
         
         def store(key, value)
-            if ( @defaultValue == value)
+            if ( @default_value == value)
                 delete(key) if ( member?(key) )
+                value
             else
                 super(key, value)
             end
