@@ -48,10 +48,14 @@ class ClusterTest < Test::Unit::TestCase
     def test_makecluster()
         c = SClust::DocumentClusterer.new(@dc)
         
+        c.build_empty_clusters(3)
+
         c.cluster
-        
+
         c.each_cluster do |cl|
+            puts('===================================')
             cl.center.get_max_terms(3).each do |t|
+                puts('-----------------------------------')
                 puts("Got Term: #{t} with value #{cl.center.get_term_value(t)}")
             end
         end

@@ -34,7 +34,7 @@ class DocTests < Test::Unit::TestCase
   def test_docfilter()
     f = SClust::DocumentTermFilter.new()
 
-    assert( f.apply("aba") == "aba", "did not filter out a.")
+    assert( f.apply("aba").original_word == "aba", "did not filter out a.")
   end
   
   def test_tokenizer()

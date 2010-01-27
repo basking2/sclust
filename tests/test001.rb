@@ -39,8 +39,8 @@ class DocTests < Test::Unit::TestCase
     d = SClust::Document.new("hi, this is a nice doc! Yup. Oh? A very nice doc, indeed.")
 
     d.terms.each do |k,v| 
-      assert(k != ".", "Period found")
-      assert(k != "", "Empty term found")
+      assert(k.original_word != ".", "Period found")
+      assert(k.original_word != "", "Empty term found")
       #puts("#{k}=#{v}")
     end 
 
@@ -63,7 +63,7 @@ class DocCollectionTests < Test::Unit::TestCase
     dc + d4
 
     dc.terms.each do |k,v|
-      if k == "a"
+    if k.original_word == "a"
         assert(v == 3, "A appers in 3 documents out of 4.")
         assert(dc.idf("a") > 2.2, "Known value for a")
         assert(dc.idf("a") < 2.3, "Known value for a")
