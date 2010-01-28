@@ -32,7 +32,9 @@ require 'optparse'
 require 'mechanize'
 
 require 'sclust/kmean/doccluster'
+require 'sclust/kmean/doccol'
 require 'sclust/util/rss'
+require 'sclust/util/doc'
 
 Log4r::Logger::root.level = 0
 $logger = Log4r::Logger.new($0)
@@ -105,7 +107,7 @@ count = 1
 def addNewDoc(col, title, body, item)
     if ( body )
         $logger.debug("Adding item #{title}")
-        col + SClust::KMean::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
+        col + SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
     else
         $logger.warn("No body for post #{title}")
     end

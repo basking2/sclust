@@ -25,8 +25,7 @@
 require 'sclust/util/filters'
 
 module SClust
-    module KMean
-    
+    module Util
         class Document
         
             attr_reader :terms, :userDate, :filter
@@ -38,8 +37,8 @@ module SClust
                 @userData = opts[:userData]
         
                 opts[:ngrams]    ||= [ 1, 2, 3 ]
-                opts[:filter]    ||= Util::DocumentTermFilter.new()
-                opts[:tokenizer] ||= Util::DocumentTokenizer.new()
+                opts[:filter]    ||= DocumentTermFilter.new()
+                opts[:tokenizer] ||= DocumentTokenizer.new()
                 
                 word_arr = opts[:tokenizer].apply(text).map { |word| 
                     opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }

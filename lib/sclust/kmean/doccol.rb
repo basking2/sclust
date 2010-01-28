@@ -41,7 +41,7 @@ module SClust
             attr_reader :logger
             
             def initialize()
-                @logger = Log4r::Logger.new("SClust::DocumentCollection")
+                @logger = Log4r::Logger.new("SClust::KMean::DocumentCollection")
                 @terms   = SClust::Util::SparseVector.new(0)
                 @doclist = []
             end

@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 # 
 
-require 'sclust/kmean/doc'
-require 'sclust/kmean/doccol'
 require 'sclust/kmean/cluster'
 require 'sclust/util/sparse_vector'
 
