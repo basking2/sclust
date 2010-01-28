@@ -26,71 +26,71 @@ module SClust
     
     module Util
     
-    #
-    # Use cases:
-    #
-    #
-    class SparseVector < Hash
-        
-        def initialize(default_value=nil)
-            super(default_value)
-            @default_value = default_value
-        end
-        
-        def store(key, value)
-            if ( @default_value == value)
-                delete(key) if ( member?(key) )
-                value
-            else
-                super(key, value)
-            end
-        end
-        
-        def [](key)
-            if has_key?(key)
-                super(key)
-            else
-                @default_value
-            end
-        end
-        
-        alias []= store
-        
-    end
-    
-    class SparseLabeledVector < SparseVector
-        
-        # Map keys to the user-defined label.
-        attr_reader :key_map
-        
-        # Map labels to the key the data is stored under.
-        attr_reader :label_map
-        
-        def initialize(default_value=nil) 
-            super(default_value) 
-            @label_map = {}
-            @key_map   = {}
-        end
-        
-        # Aliased to []=, this stored the (key, value) pair as in the Hash class but accepts an optional 3rd element
-        # which will label the key. This populates values in the attributes label_map[label] => key and key_map[key] => label.
-        def store(key, value, label=nil)
-            super(key, value)
+        #
+        # Use cases:
+        #
+        #
+        class SparseVector < Hash
             
-            if label
-                @label_map[label] = key
-                @key_map[key] = label
+            def initialize(default_value=nil)
+                super(default_value)
+                @default_value = default_value
             end
+            
+            def store(key, value)
+                if ( @default_value == value)
+                    delete(key) if ( member?(key) )
+                    value
+                else
+                    super(key, value)
+                end
+            end
+            
+            def [](key)
+                if has_key?(key)
+                    super(key)
+                else
+                    @default_value
+                end
+            end
+            
+            alias []= store
+            
         end
         
-        def delete(key)
-            if super(key)
-                label = @key_map.delete(key)
+        class SparseLabeledVector < SparseVector
+            
+            # Map keys to the user-defined label.
+            attr_reader :key_map
+            
+            # Map labels to the key the data is stored under.
+            attr_reader :label_map
+            
+            def initialize(default_value=nil) 
+                super(default_value) 
+                @label_map = {}
+                @key_map   = {}
+            end
+            
+            # Aliased to []=, this stored the (key, value) pair as in the Hash class but accepts an optional 3rd element
+            # which will label the key. This populates values in the attributes label_map[label] => key and key_map[key] => label.
+            def store(key, value, label=nil)
+                super(key, value)
                 
-                @label_map.delete(label) if label
+                if label
+                    @label_map[label] = key
+                    @key_map[key] = label
+                end
+            end
+            
+            def delete(key)
+                if super(key)
+                    label = @key_map.delete(key)
+                    
+                    @label_map.delete(label) if label
+                end
             end
         end
-    end
     
     end
 end
