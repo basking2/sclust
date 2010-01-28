@@ -28,11 +28,12 @@ require 'rubygems'
 require 'log4r'
 
 require 'rss'
-require 'sclust/doccluster'
 require 'net/http'
 require 'uri'
 require 'optparse'
 require 'mechanize'
+
+require 'sclust/kmean/doccluster'
 require 'sclust/util/rss'
 
 Log4r::Logger::root.level = 0
@@ -96,7 +97,7 @@ end
 
 $config[:opmlFiles].each { |file| config[:urlHashes] += parse_opml_file(file) }
 
-col = SClust::DocumentCollection.new()
+col = SClust::KMean::DocumentCollection.new()
 
 col.logger.outputters = $logger.outputters
 
@@ -106,7 +107,7 @@ count = 1
 def addNewDoc(col, title, body, item)
     if ( body )
         $logger.debug("Adding item #{title}")
-        col + SClust::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
+        col + SClust::KMean::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
     else
         $logger.warn("No body for post #{title}")
     end
@@ -139,7 +140,7 @@ $config[:xmlFiles].each do |file|
     end
 end
 
-cluster = SClust::DocumentClusterer.new(col)
+cluster = SClust::KMean::DocumentClusterer.new(col)
 
 cluster.build_empty_clusters(20)
 

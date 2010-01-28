@@ -24,6 +24,7 @@
 
 module SClust
     
+    module Util
     
     #
     # Use cases:
@@ -91,4 +92,5 @@ module SClust
         end
     end
     
+    end
 end
