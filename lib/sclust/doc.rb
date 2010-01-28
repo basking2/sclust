@@ -22,81 +22,82 @@
 # THE SOFTWARE.
 # 
 
-require 'sclust/filters'
+require 'sclust/util/filters'
+
 module SClust
     
-class Document
-
-    attr_reader :terms, :userDate, :filter
-
-    # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
-    def initialize(text, opts={})
-        
-        @text = text
-        @userData = opts[:userData]
-
-        opts[:ngrams] ||= [ 1, 2, 3 ]
-        opts[:filter] ||= DocumentTermFilter.new()
-        opts[:tokenizer] ||= SClust::DocumentTokenizer.new()
-        
-        word_arr = opts[:tokenizer].apply(text).map { |word| 
-            opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
-        
-
-        @terms = Hash.new(0)
-        
-        # Array of counts of grams built.
-        builtGramCounts = []
-        
-        # Build a set of n-grams from our requested ngram range.
-        opts[:ngrams].each do |n|
+    class Document
+    
+        attr_reader :terms, :userDate, :filter
+    
+        # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
+        def initialize(text, opts={})
             
-            builtGramCounts[n] = 0
+            @text = text
+            @userData = opts[:userData]
+    
+            opts[:ngrams]    ||= [ 1, 2, 3 ]
+            opts[:filter]    ||= Util::DocumentTermFilter.new()
+            opts[:tokenizer] ||= Util::DocumentTokenizer.new()
             
-            # For each word in our list...
-            word_arr.length.times do |j| 
+            word_arr = opts[:tokenizer].apply(text).map { |word| 
+                opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
+            
+    
+            @terms = Hash.new(0)
+            
+            # Array of counts of grams built.
+            builtGramCounts = []
+            
+            # Build a set of n-grams from our requested ngram range.
+            opts[:ngrams].each do |n|
                 
-                if ( n + j < word_arr.length )
+                builtGramCounts[n] = 0
+                
+                # For each word in our list...
+                word_arr.length.times do |j| 
                     
-                    term = word_arr[j]
+                    if ( n + j < word_arr.length )
+                        
+                        term = word_arr[j]
+                        
+                        # Pick number of iterations based on how close to the end of the array we are.
+                        (( ( word_arr.length > n+j)?n:word_arr.length-j)-1).times { |ngram| term += " #{word_arr[j+ngram+1]}" }
+                        
+                    end
+    
+                    @terms[term] += 1.0 if term
                     
-                    # Pick number of iterations based on how close to the end of the array we are.
-                    (( ( word_arr.length > n+j)?n:word_arr.length-j)-1).times { |ngram| term += " #{word_arr[j+ngram+1]}" }
-                    
+                    builtGramCounts[n] += 1
+    
                 end
-
-                @terms[term] += 1.0 if term
                 
-                builtGramCounts[n] += 1
-
             end
+    
+            @terms.each { |k,v| @terms[k] /= @terms.length }
             
+            if opts.key?(:term_limit) and opts[:term_limit]
+                new_terms = Hash.new(0)
+                @terms.keys.sort {|x,y| -(x <=> y) }[0..opts[:term_limit].to_i].each { |key| new_terms[key] = @terms[key] }
+                @terms=new_terms
+            end
+    
         end
-
-        @terms.each { |k,v| @terms[k] /= @terms.length }
-        
-        if opts.key?(:term_limit) and opts[:term_limit]
-            new_terms = Hash.new(0)
-            @terms.keys.sort {|x,y| -(x <=> y) }[0..opts[:term_limit].to_i].each { |key| new_terms[key] = @terms[key] }
-            @terms=new_terms
+      
+        def term_frequency(term)
+            @terms[term]
         end
-
+      
+        alias tf term_frequency
+    
+        def each_term(&call) 
+            terms.each_key { |k| yield k }
+        end
+    
+        def has_term?(term)
+            @terms.has_key?(term)
+        end
+    
     end
-  
-    def term_frequency(term)
-        @terms[term]
-    end
-  
-    alias tf term_frequency
-
-    def each_term(&call) 
-        terms.each_key { |k| yield k }
-    end
-
-    def has_term?(term)
-        @terms.has_key?(term)
-    end
-
-end
 
 end

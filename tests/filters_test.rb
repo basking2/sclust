@@ -24,7 +24,7 @@
 
 require 'test/unit'
 
-require 'sclust/filters'
+require 'sclust/util/filters'
 
 class DocTests < Test::Unit::TestCase
 
@@ -32,14 +32,14 @@ class DocTests < Test::Unit::TestCase
   def teardown() end
 
   def test_docfilter()
-    f = SClust::DocumentTermFilter.new()
+    f = SClust::Util::DocumentTermFilter.new()
 
     assert( f.apply("aba").original_word == "aba", "did not filter out a.")
   end
   
   def test_tokenizer()
       
-      f = SClust::TokenizerFilter.new()
+      f = SClust::Util::TokenizerFilter.new()
       
       assert(f.apply("hi bye") == [ "hi", "bye" ])
       assert(f.apply("hi \r\n\n\rbye") == [ "hi", "bye" ])

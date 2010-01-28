@@ -1,5 +1,6 @@
 module SClust
-    module StopwordList
+    module Util
+        module StopwordList
          @@stopword_list = %w(
 a
 
@@ -1143,6 +1144,6 @@ z
 
 zero
 )
-    end
 end
-
+end
+end
