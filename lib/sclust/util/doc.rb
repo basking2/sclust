@@ -26,6 +26,30 @@ require 'sclust/util/filters'
 
 module SClust
     module Util
+        
+        # This is a very simple document model, more simple than you would typically
+        # want for clustering. However, it is used by SClust::LDA::LDA.
+        # This holds the document text and a vector of all words (not terms).
+        # It uses the basic DocumentTokenizer and DocumentTermFilter like
+        # Document does to produce the word vector.s
+        class BasicDocument
+            
+            attr_reader :text, :words
+            
+            def initialize(text, opts={})
+                @text = text
+                opts[:filter]    ||= DocumentTermFilter.new()
+                opts[:tokenizer] ||= DocumentTokenizer.new()
+                
+                @words = opts[:tokenizer].apply(text).map { |word| 
+                    opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
+
+            end
+        end
+        
+        # A typical document representation that 
+        # is backed by a body of text but also breaks it up into 
+        # a set of n-grams using a DocumentTokenizer and a DocumentTermFilter.
         class Document
         
             attr_reader :terms, :userDate, :filter
