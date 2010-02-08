@@ -35,6 +35,7 @@ require 'sclust/kmean/doccluster'
 require 'sclust/kmean/doccol'
 require 'sclust/util/rss'
 require 'sclust/util/doc'
+require 'sclust/lda/lda'
 
 Log4r::Logger::root.level = 0
 $logger = Log4r::Logger.new($0)
@@ -61,6 +62,10 @@ OptionParser.new() do |opt|
     
     opt.on("-g", "--ngrams=Integer", Integer, "Number of words to count as a term.") do |v|
         $config[:ngrams]  << v
+    end
+    
+    opt.on("-l", "--lda", "Switch to use LDA.") do |v|
+        $config[:lda] = true
     end
     
     opt.on("-h", "--help", "This menu") do |v|
@@ -95,24 +100,36 @@ end
 # put into the document collection.
 
 
-$config[:opmlFiles].each { |file| config[:urlHashes] += parse_opml_file(file) }
-
-col = SClust::KMean::DocumentCollection.new()
-
-col.logger.outputters = $logger.outputters
+$config[:opmlFiles].each { |file| $config[:urlHashes] += parse_opml_file(file) }
 
 count = 1
 
-# Simply little temporary helper call to handle creation / erorr checking of cluster documents.
-def addNewDoc(col, title, body, item)
-    if ( body )
-        $logger.debug("Adding item #{title}")
-        col + SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
-    else
-        $logger.warn("No body for post #{title}")
+if $config[:lda]
+
+    lda = SClust::LDA::LDA.new()
+    
+    col = lda
+
+    def addNewDoc(col, title, body, item)
+        col << SClust::Util::BasicDocument.new(body)
+    end
+else
+    
+    col = SClust::KMean::DocumentCollection.new()
+
+    col.logger.outputters = $logger.outputters
+
+
+    # Simply little temporary helper call to handle creation / erorr checking of cluster documents.
+    def addNewDoc(col, title, body, item)
+        if ( body )
+            $logger.debug("Adding item #{title}")
+            col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
+        else
+            $logger.warn("No body for post #{title}")
+        end
     end
 end
-
 
 $config[:urlHashes].each do |url|
 
@@ -140,22 +157,32 @@ $config[:xmlFiles].each do |file|
     end
 end
 
-cluster = SClust::KMean::DocumentClusterer.new(col)
 
-cluster.build_empty_clusters(20)
-
-cluster.iterations=3
-
-cluster.logger.outputters = $logger.outputters
-
-cluster.cluster()
-
-cluster.each_cluster do |cluster| 
-    puts("---------- Cluster #{cluster} ---------- ")
-    cluster.get_max_terms($config[:topTerms]).each do |term|
-        print("\tTerm:(#{term.original_word}=#{cluster.center.values[term]})")
+if $config[:lda]
+    
+    lda.lda
+    
+    require 'pp'
+    
+    pp lda.topics
+    
+else
+    cluster = SClust::KMean::DocumentClusterer.new(col)
+    
+    cluster.build_empty_clusters(20)
+    
+    cluster.iterations=3
+    
+    cluster.logger.outputters = $logger.outputters
+    
+    cluster.cluster()
+    
+    cluster.each_cluster do |cluster| 
+        puts("---------- Cluster #{cluster} ---------- ")
+        cluster.get_max_terms($config[:topTerms]).each do |term|
+            print("\tTerm:(#{term.original_word}=#{cluster.center.values[term]})")
+        end
+        puts("")
     end
-    puts("")
 end
-
 

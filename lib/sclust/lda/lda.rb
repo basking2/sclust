@@ -26,7 +26,7 @@ module SClust
     module LDA
         class LDA
             
-            attr_reader :doclist
+            attr_reader :doclist, :topics
             attr_writer :doclist
             
             def initialize()
@@ -37,13 +37,13 @@ module SClust
                 # that produced @wordlist[i].
                 @word2doc = []
                 
-                topics = 10
+                self.topics = 10
             end
             
             def <<(document)
                 @doclist << document
                 @wordlist += document.words
-                document.words.times {@word2doc << document}
+                document.words.length.times {@word2doc << document}
             end
             
             def topics=(count)
@@ -53,7 +53,7 @@ module SClust
                     @topic2doc
                 end
             end
-            
+                        
             # Build a wordlist index array. This is an array that contains indexes into @wordlist.
             # However, instead of being simply {0,1,2,3...} this array is randomized so that
             # we index into @wordlist in a random order.
@@ -72,6 +72,8 @@ module SClust
             # Compute P(z=j | z..._i, w). Or, the probability that
             # a topic z is the topic j represented by the given word given that word.
             def p_of_z(topic, word)
+                
+                return 0 unless topic[:words][word]
                 
                 ((topic[:words][word] - 1 + @beta)  / (topic[:wordcount] - 1 + @beta  * @wordlist.length)) * 
                 ((topic[:docs].size   - 1 + @alpha) / (@doclist.size    - 1 + @alpha * @topics.size))
