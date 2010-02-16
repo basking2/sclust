@@ -43,7 +43,7 @@ $logger.outputters = [ Log4r::StderrOutputter.new($0) ]
 
 $wwwagent = WWW::Mechanize.new()
 
-$config = { :opmlFiles=>[], :urlHashes => [], :topTerms => 10, :xmlFiles => [] , :ngrams => []}
+$config = { :opmlFiles=>[], :urlHashes => [], :topTerms => 3, :iterations=>3, :topics => 3, :xmlFiles => [] , :ngrams => []}
 
 OptionParser.new() do |opt|
     opt.banner = "Use of #{$0}:"
@@ -66,6 +66,14 @@ OptionParser.new() do |opt|
     
     opt.on("-l", "--lda", "Switch to use LDA.") do |v|
         $config[:lda] = true
+    end
+    
+    opt.on("-T", "--topics=Integer", Integer, "Topics to find.") do |v|
+        $config[:topics] = v
+    end
+    
+    opt.on("-n", "--num-interations=Integer", Integer, "The number of iterations to go through") do |v|
+        $config[:iterations] = v
     end
     
     opt.on("-h", "--help", "This menu") do |v|
@@ -107,6 +115,8 @@ count = 1
 if $config[:lda]
 
     lda = SClust::LDA::LDA.new()
+    
+    lda.topics=$config[:topics]
     
     col = lda
 
@@ -160,8 +170,8 @@ end
 
 if $config[:lda]
     
-    lda.lda
- 
+    lda.lda(:iterations=>$config[:iterations])
+    
     lda.get_max_terms($config[:topTerms]).each do |topic|
         puts("---------- Topic ---------- ")
         topic.each do |words|
@@ -172,9 +182,9 @@ if $config[:lda]
 else
     cluster = SClust::KMean::DocumentClusterer.new(col)
     
-    cluster.build_empty_clusters(20)
+    cluster.build_empty_clusters($config[:topics])
     
-    cluster.iterations=3
+    cluster.iterations=$config[:iterations]
     
     cluster.logger.outputters = $logger.outputters
     
