@@ -161,10 +161,13 @@ end
 if $config[:lda]
     
     lda.lda
-    
-    require 'pp'
-    
-    pp lda.topics
+ 
+    lda.get_max_terms($config[:topTerms]).each do |topic|
+        puts("---------- Topic ---------- ")
+        topic.each do |words|
+            puts("\t#{words[0]} - #{words[1].to_s}")
+        end
+    end
     
 else
     cluster = SClust::KMean::DocumentClusterer.new(col)

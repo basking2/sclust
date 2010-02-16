@@ -24,6 +24,19 @@
 
 module SClust
     module LDA
+        
+        class Topic
+
+            attr_reader :words, :wordcount, :docs
+            attr_writer :words, :wordcount, :docs
+
+            def initialize()
+                @words = {}
+                @wordcount = 0
+                @docs = {}
+            end
+        end
+        
         class LDA
             
             attr_reader :doclist, :topics
@@ -49,7 +62,7 @@ module SClust
             def topics=(count)
                 @topics = []
                 count.times do |t| 
-                    @topics << { :words => {} , :wordcount => 0, :docs => {} } 
+                    @topics << Topic.new() 
                     @topic2doc
                 end
             end
@@ -73,10 +86,10 @@ module SClust
             # a topic z is the topic j represented by the given word given that word.
             def p_of_z(topic, word)
                 
-                return 0 unless topic[:words][word]
+                return 0 unless topic.words[word]
                 
-                ((topic[:words][word] - 1 + @beta)  / (topic[:wordcount] - 1 + @beta  * @wordlist.length)) * 
-                ((topic[:docs].size   - 1 + @alpha) / (@doclist.size    - 1 + @alpha * @topics.size))
+                ((topic.words[word] - 1 + @beta)  / (topic.wordcount - 1 + @beta  * @wordlist.length)) * 
+                ((topic.docs.size   - 1 + @alpha) / (@doclist.size    - 1 + @alpha * @topics.size))
                 
             end
             
@@ -93,9 +106,9 @@ module SClust
                     topic = (@topics.size * rand).to_i
 
                     @word2topic << topic                        # Record that this word goes to this topic.
-                    @topics[topic][:words][@wordlist[i]] = 1    # Record a new word in this topic
-                    @topics[topic][:wordcount]          += 1    # Total sum of words
-                    @topics[topic][:docs][@word2doc[i]]  = true # Record this doc index in this topic
+                    @topics[topic].words[@wordlist[i]] = 1    # Record a new word in this topic
+                    @topics[topic].wordcount          += 1    # Total sum of words
+                    @topics[topic].docs[@word2doc[i]]  = true # Record this doc index in this topic
                 end
                 
             end
@@ -131,15 +144,15 @@ module SClust
                     end
                     
                     # Remove word from previous topic.
-                    topic[:words][@wordlist[i]] -= 1    # Remove a new word in this topic
-                    topic[:wordcount]           -= 1    # Reduce sum of words
-                    topic[:docs].delete(@word2doc[i])   # Remove this doc index in this topic
+                    topic.words[@wordlist[i]] -= 1    # Remove a new word in this topic
+                    topic.wordcount           -= 1    # Reduce sum of words
+                    topic.docs.delete(@word2doc[i])   # Remove this doc index in this topic
                     
                     # Add word to chosen topic.
                     @word2topic[i] = topic              # Record that this word goes to this topic.
-                    topic[:words][@wordlist[i]] += 1    # Record a new word in this topic
-                    topic[:wordcount]           += 1    # Total sum of words
-                    topic[:docs][@word2doc[i]]   = true # Record this doc index in this topic
+                    topic.words[@wordlist[i]] += 1    # Record a new word in this topic
+                    topic.wordcount           += 1    # Total sum of words
+                    topic.docs[@word2doc[i]]   = true # Record this doc index in this topic
                 end
             end
             
@@ -154,7 +167,41 @@ module SClust
                     lda_once()
                 end
             end
-
+            
+            # Takes {|topic| ... }
+            def each_topic(&topicproc)
+                @topics.each &topicproc
+            end
+            
+            # Return a list lists, [ z, word ].
+            def get_top_words_for_topic(topic, n = 3)
+                
+                # List of (z, topic, word)
+                tupleList = []
+                
+                topic.words.each_key do |word|
+                    tupleList << [ p_of_z(topic, word), word, topic ]
+                end
+                
+                # Yes, rev the comparison so the list sorts backwards.
+                tupleList.sort { |x, y| y[0] <=> x[0] }
+                
+                tupleList[0...n]
+                
+            end
+            
+            # Returns list list list.
+            # Each list is a topic list.
+            # Each topic list contains a word list.
+            # [ [ z, word, topic ], ... ]
+            def get_max_terms(n=3)
+                topics = []
+                
+                each_topic { |t| topics << get_top_words_for_topic(t, n) }
+                
+                topics
+            end
+            
         end
     end
 end
