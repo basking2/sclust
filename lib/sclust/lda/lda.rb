@@ -71,15 +71,17 @@ module SClust
             # However, instead of being simply {0,1,2,3...} this array is randomized so that
             # we index into @wordlist in a random order.
             def build_randomized_index_into_words()
-                @wi = []
-                @wordlist.each_index { |i| @wi << i }
+                @randomized_word_index = []
+                
+                @wordlist.each_index { |i| @randomized_word_index << i }
                 
                 @wordlist.each_index do |i|  
                     new_home = (@wordlist.length * rand).to_i
-                    tmp = @wi[i]
-                    @wi[i] = @wi[new_home]
-                    @wi[new_home] = tmp
+                    tmp = @randomized_word_index[i]
+                    @randomized_word_index[i] = @randomized_word_index[new_home]
+                    @randomized_word_index[new_home] = tmp
                 end
+                
             end
             
             # Compute P(z=j | z..._i, w). Or, the probability that
@@ -88,9 +90,13 @@ module SClust
                 
                 return 0 unless topic.words[word]
                 
-                ((topic.words[word] - 1 + @beta)  / (topic.wordcount - 1 + @beta  * @wordlist.length)) * 
+                ((topic.words[word] - 1 + @beta)  / (topic.wordcount - topic.words[word] - 1 + @beta  * @wordlist.length)) * 
                 ((topic.docs.size   - 1 + @alpha) / (@doclist.size    - 1 + @alpha * @topics.size))
                 
+            end
+            
+            def each_radomized_word_index(&call)
+                @randomized_word_index.each &call
             end
             
             def lda_setup()
@@ -102,57 +108,69 @@ module SClust
                 @word2topic       = []
                 @doc2topic        = []
                 
-                @wi.each do |i|
+                each_radomized_word_index do |i|
                     topic = (@topics.size * rand).to_i
 
-                    @word2topic << topic                        # Record that this word goes to this topic.
-                    @topics[topic].words[@wordlist[i]] = 1    # Record a new word in this topic
-                    @topics[topic].wordcount          += 1    # Total sum of words
-                    @topics[topic].docs[@word2doc[i]]  = true # Record this doc index in this topic
+                    @word2topic[i] = topic                        # Record that this word goes to this topic.
+                    @topics[topic].words[@wordlist[i]] ||= 0
+                    @topics[topic].docs[@word2doc[i]]  ||= 0
+                    
+                    @topics[topic].words[@wordlist[i]]  += 1    # Record a new word in this topic
+                    @topics[topic].wordcount            += 1    # Total sum of words
+                    @topics[topic].docs[@word2doc[i]]   += 1   # Record this doc index in this topic
                 end
                 
             end
             
             # Perform 1 phase of lda
             def lda_once()
-                @wi.each do |i|
+                each_radomized_word_index do |random_word_index|
+                    
+                    random_word = @wordlist[random_word_index]
                     
                     zdist = []
                     ztotal = 0.0 # Track actual total incase the sum of zdist isn't quite 1.0.
                     
                     # Compute distribution over z for word i.
                     @topics.each do |topic| 
-                        z = p_of_z(topic, @wordlist[i]) 
+                        z = p_of_z(topic, random_word) 
                         ztotal += z 
                         zdist << z
                     end
                                         
-                    r     = rand * ztotal # Random value to pick topic with.
-                    zacc  = 0.0           # Accumulator of seen values of zdist[topici].
-                    topic = nil
+                    r      = rand * ztotal # Random value to pick topic with.
+                    zacc   = 0.0           # Accumulator of seen values of zdist[topici].
+                    topici = (rand() * @topics.size).to_i 
 
                     # Pick a topic, t
+                    
                     catch(:picked_topic) do
-                        @topics.each_with_index do |t, topici|
+                        @topics.each_index do |topici|
                             zacc += zdist[topici]
-    
-                            if r <= zacc
-                                topic = t
-                                throw :picked_topic
-                            end
+                            throw :picked_topic if r < zacc
                         end
                     end
                     
+                    topic = @topics[topici]
+                    
+                    previous_topic = @topics[@word2topic[random_word_index]]
+
                     # Remove word from previous topic.
-                    topic.words[@wordlist[i]] -= 1    # Remove a new word in this topic
-                    topic.wordcount           -= 1    # Reduce sum of words
-                    topic.docs.delete(@word2doc[i])   # Remove this doc index in this topic
+                    
+                    previous_topic.words[@wordlist[random_word_index]] -= 1    # Remove a new word in this topic
+                    previous_topic.wordcount                           -= 1    # Reduce sum of words
+                    previous_topic.docs[@word2doc[random_word_index]]  -= 1   # Remove this doc index in this topic
+                    
+                    previous_topic.docs.delete(@word2doc[random_word_index]) if previous_topic.docs[@word2doc[random_word_index]] == 0
+                    
+                    topic.words[@wordlist[random_word_index]] ||= 0     # If word was not in previous topic, add to this one.
+                    topic.docs[@word2doc[random_word_index]]  ||= 0     # If doc was not previously here.
                     
                     # Add word to chosen topic.
-                    @word2topic[i] = topic              # Record that this word goes to this topic.
-                    topic.words[@wordlist[i]] += 1    # Record a new word in this topic
-                    topic.wordcount           += 1    # Total sum of words
-                    topic.docs[@word2doc[i]]   = true # Record this doc index in this topic
+                    @word2topic[random_word_index] = topici           # Record that this word goes to this topic.
+                    topic.words[@wordlist[random_word_index]] += 1    # Record a new word in this topic
+                    topic.wordcount                           += 1    # Total sum of words
+                    topic.docs[@word2doc[random_word_index]]  += 1 # Record this doc index in this topic
                 end
             end
             
@@ -184,7 +202,7 @@ module SClust
                 end
                 
                 # Yes, rev the comparison so the list sorts backwards.
-                tupleList.sort { |x, y| y[0] <=> x[0] }
+                tupleList.sort! { |x, y| y[0] <=> x[0] }
                 
                 tupleList[0...n]
                 
