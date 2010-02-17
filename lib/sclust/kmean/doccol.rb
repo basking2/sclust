@@ -29,6 +29,8 @@ require 'sclust/util/sparse_vector'
 
 module SClust
     module KMean
+        
+        
         class DocumentCollection 
         
             # terms - a hash were they keys are the terms in the documents and the values stored are the number of documents contiaining the term.

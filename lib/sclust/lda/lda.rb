@@ -22,6 +22,9 @@
 # THE SOFTWARE.
 # 
 
+require 'sclust/util/word'
+require 'log4r'
+
 module SClust
     module LDA
         
@@ -39,18 +42,26 @@ module SClust
         
         class LDA
             
-            attr_reader :doclist, :topics
-            attr_writer :doclist
+            attr_reader :logger, :iterations, :doclist, :topics
+            attr_writer :logger, :iterations, :doclist
             
-            def initialize()
+            # Documents may be added after LDA is created, unlike k-mean clustering.
+            def initialize(docCol=nil)
+                @iterations = 3
                 @wordlist    = []
                 @doclist     = []
+                @logger      = Log4r::Logger.new('Clusterer')
+
                 
                 # Array the same size as @wordlist but stores the document object at index i
                 # that produced @wordlist[i].
                 @word2doc = []
                 
                 self.topics = 10
+                
+                if ( docCol )
+                    docCol.each {|d| self << d}
+                end
             end
             
             def <<(document)
@@ -175,7 +186,7 @@ module SClust
             end
             
             def lda(opts={})
-                opts[:iterations] ||= 3
+                opts[:iterations] ||= @iterations
                 
                 unless (opts[:continue])
                     lda_setup()
@@ -198,11 +209,11 @@ module SClust
                 tupleList = []
                 
                 topic.words.each_key do |word|
-                    tupleList << [ p_of_z(topic, word), word, topic ]
+                    tupleList << SClust::Util::Word.new(word, p_of_z(topic, word), { :topic=>topic } )
                 end
                 
                 # Yes, rev the comparison so the list sorts backwards.
-                tupleList.sort! { |x, y| y[0] <=> x[0] }
+                tupleList.sort! { |x, y| y.weight <=> x.weight }
                 
                 tupleList[0...n]
                 
@@ -219,6 +230,8 @@ module SClust
                 
                 topics
             end
+            
+            alias cluster lda 
             
         end
     end

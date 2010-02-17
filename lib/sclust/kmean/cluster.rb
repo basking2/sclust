@@ -24,6 +24,7 @@
 
 require 'rubygems'
 require 'log4r'
+require 'sclust/util/word'
 
 module SClust
     module KMean
@@ -84,12 +85,12 @@ module SClust
                 values_to_terms = {}
         
                 @values.each do |t, v|
-                    values_to_terms[v] ||= [] 
-                    values_to_terms[v] << t
+                    values_to_terms[v] ||= []
+                    values_to_terms[v] << SClust::Util::Word.new(t, v, {:stemmed_word => t})
                 end
                 
-                sorted_values = values_to_terms.keys.sort { |x,y|  ( x > y ) ? -1 : 1 }
-        
+                sorted_values = values_to_terms.keys.sort { |x,y|  y <=> x }
+
                 result = []
                 
                 #n = @values.length if ( n > @values.length || n == 0)
@@ -99,7 +100,7 @@ module SClust
                     sorted_values.each do |value|
                     
                         result += values_to_terms[value]
-                        
+
                         throw :haveEnough if result.length >= n
                         
                     end
@@ -107,7 +108,7 @@ module SClust
                 end
                 
                 # Trim our results to exactly the requested size.
-                result.slice(0,n)
+                result[0...n]
                 
             end
             
@@ -273,6 +274,18 @@ module SClust
                     assign_all_points
                 end
             end
+            
+            def get_max_terms(n=3)
+                r = []
+                
+                each_cluster do |cluster|
+                    r << cluster.get_max_terms(n)
+                end
+                
+                r
+            end
+            
+            alias topics= build_empty_clusters
         end
     end
 end

@@ -60,7 +60,7 @@ class DocTests < Test::Unit::TestCase
             puts("---------- Topic ---------- ")
           
             topic.each do |words|
-                puts("\t#{words[0]} - #{words[1].to_s}")
+                puts("\t#{words.weight} - #{words.to_s}")
             end
         end
     end

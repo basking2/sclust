@@ -28,6 +28,7 @@ require 'sclust/util/sparse_vector'
 module SClust
   
     module KMean
+        
         # A document clusterer that overrides the + operator
         # to allow for adding Document objects.
         class DocumentClusterer < Clusterer

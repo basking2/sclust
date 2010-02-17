@@ -27,6 +27,11 @@ require 'sclust/util/filters'
 module SClust
     module Util
         
+        class BasicDocumentCollection < Array
+        end
+        
+
+        
         # This is a very simple document model, more simple than you would typically
         # want for clustering. However, it is used by SClust::LDA::LDA.
         # This holds the document text and a vector of all words (not terms).

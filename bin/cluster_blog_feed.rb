@@ -100,6 +100,15 @@ def parse_opml_file(file)
     r
 end
 
+def print_topics(topic_thing)
+    topic_thing.get_max_terms($config[:topTerms]).each do |topic|
+        puts("---------- Topic ---------- ")
+        topic.each do |word|
+            puts("\t#{word.weight} - #{word.to_s}")
+        end
+    end
+end
+
 # Takes an RSS document (or atom document),
 # a URI object to one, a URI string, or an XML string
 # that will be parsed into a document.
@@ -114,11 +123,7 @@ count = 1
 
 if $config[:lda]
 
-    lda = SClust::LDA::LDA.new()
-    
-    lda.topics=$config[:topics]
-    
-    col = lda
+    col = SClust::Util::BasicDocumentCollection.new()
 
     def addNewDoc(col, title, body, item)
         col << SClust::Util::BasicDocument.new(body)
@@ -167,35 +172,20 @@ $config[:xmlFiles].each do |file|
     end
 end
 
-
+# Create the right clustering tool for use with the right cluster collection.
 if $config[:lda]
-    
-    lda.lda(:iterations=>$config[:iterations])
-    
-    lda.get_max_terms($config[:topTerms]).each do |topic|
-        puts("---------- Topic ---------- ")
-        topic.each do |words|
-            puts("\t#{words[0]} - #{words[1].to_s}")
-        end
-    end
-    
+    cl = SClust::LDA::LDA.new(col)
 else
-    cluster = SClust::KMean::DocumentClusterer.new(col)
-    
-    cluster.build_empty_clusters($config[:topics])
-    
-    cluster.iterations=$config[:iterations]
-    
-    cluster.logger.outputters = $logger.outputters
-    
-    cluster.cluster()
-    
-    cluster.each_cluster do |cluster| 
-        puts("---------- Cluster #{cluster} ---------- ")
-        cluster.get_max_terms($config[:topTerms]).each do |term|
-            print("\tTerm:(#{term.original_word}=#{cluster.center.values[term]})")
-        end
-        puts("")
-    end
+    cl = SClust::KMean::DocumentClusterer.new(col)    
 end
+
+cl.topics=$config[:topics]
+
+cl.iterations=$config[:iterations]
+
+cl.logger.outputters = $logger.outputters
+
+cl.cluster
+
+print_topics(cl)
 
