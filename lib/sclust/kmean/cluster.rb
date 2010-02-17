@@ -156,7 +156,7 @@ module SClust
             attr_writer :clusters, :points, :cluster_count, :iterations, :logger
         
             # Optionally takes a notifier.
-            def initialize(points)
+            def initialize(points=[])
                 @iterations    = 3
                 @cluster_count = 0
                 @points        = points
@@ -164,7 +164,7 @@ module SClust
                 @logger        = Log4r::Logger.new('Clusterer')
             
                 # Randomly select a few starting documents.
-                build_empty_clusters('crp')
+                #build_empty_clusters('crp')
             end
             
             # Drop all existing clusters and recreate them using the given method.
@@ -173,7 +173,7 @@ module SClust
             # If it is CRP, then the Chinese Resteraunt Process is used, considering each document
             # and creating a cluster with that document as the center stochastically and proportionally
             # the number of documents already considered.
-            def build_empty_clusters(process)
+            def topics=(process)
                 
                 @clusters = []
                 
@@ -181,14 +181,6 @@ module SClust
                     @logger.info("Building cluster of constant cluster count #{process}.")
                     @cluster_count = process
                     @cluster_count.times { @clusters << Cluster.new(@points[rand(points.length)]) }
-                    
-                    #@clusters.each do |cluster|
-                    #    puts("---------- Cluster #{cluster} ---------- ")
-                    #    cluster.get_max_terms(100).each do |term|
-                    #        print("\tTerm:(#{term.original_word}=#{cluster.center.values[term]})")
-                    #    end
-                    #    puts("")
-                    #end
                     
                 elsif(process.is_a?(String))
                     if ( process == "crp" )
@@ -269,6 +261,10 @@ module SClust
             end
           
             def cluster
+                
+                # If we are not initialized, initialize the cluster! :)
+                self.build_empty_clusters('crp') unless @clusters && @clusters.size > 0
+                
                 iterations.times do |i|
                     @logger.info("Starting iteration #{i+1} of #{iterations}.")
                     assign_all_points
@@ -285,7 +281,6 @@ module SClust
                 r
             end
             
-            alias topics= build_empty_clusters
         end
     end
 end

@@ -123,26 +123,17 @@ count = 1
 
 if $config[:lda]
 
-    col = SClust::Util::BasicDocumentCollection.new()
+    clusterer = SClust::LDA::LDA.new()
 
     def addNewDoc(col, title, body, item)
         col << SClust::Util::BasicDocument.new(body)
     end
 else
     
-    col = SClust::KMean::DocumentCollection.new()
+    clusterer = SClust::KMean::DocumentClusterer.new()    
 
-    col.logger.outputters = $logger.outputters
-
-
-    # Simply little temporary helper call to handle creation / erorr checking of cluster documents.
     def addNewDoc(col, title, body, item)
-        if ( body )
-            $logger.debug("Adding item #{title}")
-            col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
-        else
-            $logger.warn("No body for post #{title}")
-        end
+        col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
     end
 end
 
@@ -151,7 +142,7 @@ $config[:urlHashes].each do |url|
     $logger.info("Processing #{url['title']} #{count} / #{$config[:urlHashes].size}")
 
     begin
-        SClust::RSS::rss_to_documents(url['xmlUrl']) { |title, body, item| addNewDoc(col, title, body, item) }
+        SClust::RSS::rss_to_documents(url['xmlUrl']) { |title, body, item| addNewDoc(clusterer, title, body, item) if body }
     rescue Exception => e
         $logger.error("Error retrieving #{url['xmlUrl']}: #{e.message}. Skipping.")
         $logger.error(e.backtrace.join("\n"))
@@ -165,7 +156,7 @@ $config[:xmlFiles].each do |file|
     $logger.info("Processing file #{$config[:xmlFiles]}.")
     
     begin
-        SClust::RSS::rss_to_documents(File.new(file)) { |title, body, item| addNewDoc(col, title, body, item) }
+        SClust::RSS::rss_to_documents(File.new(file)) { |title, body, item| addNewDoc(clusterer, title, body, item) if body }
     rescue Exception => e
         $logger.error("Error processing file #{file}: #{e.message}. Skipping.")
         $logger.error(e.backtrace.join("\n"))
@@ -173,19 +164,14 @@ $config[:xmlFiles].each do |file|
 end
 
 # Create the right clustering tool for use with the right cluster collection.
-if $config[:lda]
-    cl = SClust::LDA::LDA.new(col)
-else
-    cl = SClust::KMean::DocumentClusterer.new(col)    
-end
 
-cl.topics=$config[:topics]
+clusterer.topics=$config[:topics]
 
-cl.iterations=$config[:iterations]
+clusterer.iterations=$config[:iterations]
 
-cl.logger.outputters = $logger.outputters
+clusterer.logger.outputters = $logger.outputters
 
-cl.cluster
+clusterer.cluster
 
-print_topics(cl)
+print_topics(clusterer)
 

@@ -33,27 +33,49 @@ module SClust
         # to allow for adding Document objects.
         class DocumentClusterer < Clusterer
             
-            def initialize(documentCollection)
+            def initialize(documentCollection=[])
+                @document_collection = SClust::KMean::DocumentCollection.new()
+                super()
+            end
+            
+            def <<(d)
+                if ( d.is_a?(SClust::Util::Document) )
+                    @document_collection << d
+                else
+                    @document_collection << SClust::Util::Document.new(d.to_s)
+                end
+            end
+            
+            # This must be run to conver the document collection into
+            # the points in a cluster.
+            def initialize_points()
                 
                 point_list = []
                 
-                documentCollection.doclist.each do |doc|
+                @document_collection.doclist.each do |doc|
                     
                     doc_terms = SClust::Util::SparseVector.new(0)
                     
                     # Buid a BIG term vector list for this document.
                     doc.terms.each_key do |term|
-                        doc_terms[term] = doc.tf(term) - documentCollection.idf(term)
+                        doc_terms[term] = doc.tf(term) - @document_collection.idf(term)
                     end
                     
                     # def initialize(terms, values, source_object = nil)
                     point_list << ClusterPoint.new(doc_terms, doc)
                 end
                 
-                super(point_list)
+                self.points = point_list
                 
             end
-        
+            
+            def topics=(n)
+                
+                initialize_points unless ( self.points && self.points.size > 0 )
+                super(n)
+                
+            end
+            
         end
     end
 end
