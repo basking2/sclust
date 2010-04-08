@@ -133,7 +133,7 @@ else
     clusterer = SClust::KMean::DocumentClusterer.new()    
 
     def addNewDoc(col, title, body, item)
-        col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>100)
+        col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>1000)
     end
 end
 

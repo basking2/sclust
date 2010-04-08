@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # 
-
+require 'rubygems'
 require 'sclust/util/word'
 require 'log4r'
 
@@ -166,13 +166,18 @@ module SClust
                     
                     previous_topic = @topics[@word2topic[random_word_index]]
 
+                    # Skip if src and dst topic are the same                    
+                    next if @word2topic[random_word_index] == topici
+
                     # Remove word from previous topic.
                     
-                    previous_topic.words[@wordlist[random_word_index]] -= 1    # Remove a new word in this topic
-                    previous_topic.wordcount                           -= 1    # Reduce sum of words
-                    previous_topic.docs[@word2doc[random_word_index]]  -= 1   # Remove this doc index in this topic
-                    
-                    previous_topic.docs.delete(@word2doc[random_word_index]) if previous_topic.docs[@word2doc[random_word_index]] == 0
+                    if ( previous_topic.words[@wordlist[random_word_index]] > 0 )
+                        previous_topic.words[@wordlist[random_word_index]] -= 1    # Remove a new word in this topic
+                        previous_topic.wordcount                           -= 1    # Reduce sum of words
+                        previous_topic.docs[@word2doc[random_word_index]]  -= 1   # Remove this doc index in this topic
+                        
+                        previous_topic.docs.delete(@word2doc[random_word_index]) if previous_topic.docs[@word2doc[random_word_index]] <= 0
+                    end
                     
                     topic.words[@wordlist[random_word_index]] ||= 0     # If word was not in previous topic, add to this one.
                     topic.docs[@word2doc[random_word_index]]  ||= 0     # If doc was not previously here.

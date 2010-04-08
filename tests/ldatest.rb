@@ -46,7 +46,7 @@ class DocTests < Test::Unit::TestCase
         lda << SClust::Util::BasicDocument.new("a b 1 z ", :filter => @null_filter)
         lda << SClust::Util::BasicDocument.new("a b 2 5 ", :filter => @null_filter)
         lda << SClust::Util::BasicDocument.new("a b 3 4 ", :filter => @null_filter)
-        #lda << SClust::Util::BasicDocument.new("a b c d e f g", :filter => @null_filter)
+        lda << SClust::Util::BasicDocument.new("a b c d e f g", :filter => @null_filter)
         lda << SClust::Util::BasicDocument.new("d e f z", :filter => @null_filter)
         lda << SClust::Util::BasicDocument.new("g h z", :filter => @null_filter)
         lda << SClust::Util::BasicDocument.new("h i z", :filter => @null_filter)
