@@ -57,7 +57,7 @@ module SClust
         # a set of n-grams using a DocumentTokenizer and a DocumentTermFilter.
         class Document
         
-            attr_reader :terms, :userDate, :filter
+            attr_reader :terms, :userDate, :filter, :word_count, :words
         
             # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
             def initialize(text, opts={})
@@ -69,10 +69,11 @@ module SClust
                 opts[:filter]    ||= DocumentTermFilter.new()
                 opts[:tokenizer] ||= DocumentTokenizer.new()
                 
-                word_arr = opts[:tokenizer].apply(text).map { |word| 
+                @words = opts[:tokenizer].apply(text).map { |word| 
                     opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
                 
         
+                @word_count = @words.size
                 @terms = Hash.new(0)
                 
                 # Array of counts of grams built.
@@ -84,14 +85,14 @@ module SClust
                     builtGramCounts[n] = 0
                     
                     # For each word in our list...
-                    word_arr.length.times do |j| 
+                    @words.length.times do |j| 
                         
-                        if ( n + j < word_arr.length )
+                        if ( n + j < @words.length )
                             
-                            term = word_arr[j]
+                            term = @words[j]
                             
                             # Pick number of iterations based on how close to the end of the array we are.
-                            (( ( word_arr.length > n+j)?n:word_arr.length-j)-1).times { |ngram| term += " #{word_arr[j+ngram+1]}" }
+                            (( ( @words.length > n+j)?n:@words.length-j)-1).times { |ngram| term += " #{@words[j+ngram+1]}" }
                             
                         end
         
