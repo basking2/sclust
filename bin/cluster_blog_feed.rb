@@ -35,7 +35,8 @@ require 'sclust/kmean/doccluster'
 require 'sclust/kmean/doccol'
 require 'sclust/util/rss'
 require 'sclust/util/doc'
-require 'sclust/lda/lda'
+require 'sclust/util/filters'
+require 'sclust/lda/lda2'
 
 Log4r::Logger::root.level = 0
 $logger = Log4r::Logger.new($0)
@@ -121,12 +122,19 @@ $config[:opmlFiles].each { |file| $config[:urlHashes] += parse_opml_file(file) }
 
 count = 1
 
+$null_filter = SClust::Util::NullFilter.new()
+
 if $config[:lda]
 
-    clusterer = SClust::LDA::LDA.new()
+    #clusterer = SClust::LDA::LDA.new()
+    #def addNewDoc(col, title, body, item)
+    #    col << SClust::Util::BasicDocument.new(body, :filter=>$null_filter)
+    #end
+    
+    clusterer = SClust::LDA2::LDA2.new()    
 
     def addNewDoc(col, title, body, item)
-        col << SClust::Util::BasicDocument.new(body)
+        col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>1000)
     end
 else
     
