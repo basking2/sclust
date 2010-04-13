@@ -24,7 +24,7 @@
 
 require 'test/unit'
 
-require 'sclust/lda/lda'
+require 'sclust/lda/lda2'
 require 'sclust/util/doc'
 
 class DocTests < Test::Unit::TestCase
@@ -39,20 +39,20 @@ class DocTests < Test::Unit::TestCase
     def test_lda_001()
         
         
-        lda = SClust::LDA::LDA.new()
+        lda = SClust::LDA2::LDA2.new()
     
         lda.topics=4
     
-        lda << SClust::Util::BasicDocument.new("a b 1 z ", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("a b 2 5 ", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("a b 3 4 ", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("a b c d e f g", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("d e f z", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("g h z", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("h i z", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("x y 6", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("x y 7", :filter => @null_filter)
-        lda << SClust::Util::BasicDocument.new("x y 8", :filter => @null_filter)
+        lda << SClust::Util::Document.new("a b 1 z ", :filter => @null_filter)
+        lda << SClust::Util::Document.new("a b 2 5 ", :filter => @null_filter)
+        lda << SClust::Util::Document.new("a b 3 4 ", :filter => @null_filter)
+        lda << SClust::Util::Document.new("a b c d e f g", :filter => @null_filter)
+        lda << SClust::Util::Document.new("d e f z", :filter => @null_filter)
+        lda << SClust::Util::Document.new("g h z", :filter => @null_filter)
+        lda << SClust::Util::Document.new("h i z", :filter => @null_filter)
+        lda << SClust::Util::Document.new("x y 6", :filter => @null_filter)
+        lda << SClust::Util::Document.new("x y 7", :filter => @null_filter)
+        lda << SClust::Util::Document.new("x y 8", :filter => @null_filter)
 
         lda.lda(:iterations=>50)
 
