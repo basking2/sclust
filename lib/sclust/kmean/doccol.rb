@@ -51,9 +51,8 @@ module SClust
             # Add a document to the collection and adjust the @terms attribute to store any new terms in the document.
             # The document is also added to the @doclist attribute.
             def <<(d)
-        
-                d.each_term do |term|
-                  @terms[term] += 1.0
+                d.each_term do |term, frequency|
+                  @terms[term] += frequency
                 end
                 
                 @doclist<<d

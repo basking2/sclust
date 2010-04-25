@@ -22,8 +22,9 @@
 # THE SOFTWARE.
 # 
 
-require 'sclust/doc'
-require 'sclust/doccol'
+require 'sclust/util/doc'
+require 'sclust/kmean/doccol'
+require 'sclust/util/filters'
 require 'test/unit'
 
 
@@ -36,7 +37,7 @@ class DocTests < Test::Unit::TestCase
   #end
 
   def test_builddoc
-    d = SClust::Document.new("hi, this is a nice doc! Yup. Oh? A very nice doc, indeed.")
+    d = SClust::Util::Document.new("hi, this is a nice doc! Yup. Oh? A very nice doc, indeed.")
 
     d.terms.each do |k,v| 
       assert(k.original_word != ".", "Period found")
@@ -51,23 +52,28 @@ end
 class DocCollectionTests < Test::Unit::TestCase
 
   def test_collectionadd()
-    dc = SClust::DocumentCollection.new()
-    d1 = SClust::Document.new("a b c d d e a q a b") 
-    d2 = SClust::Document.new("a b d e a")
-    d3 = SClust::Document.new("bob")
-    d4 = SClust::Document.new("frank a")
+    filter = SClust::Util::NullFilter.new()
+    dc = SClust::KMean::DocumentCollection.new()
+    d1 = SClust::Util::Document.new("a b c d d e a q a b", :filter=>filter, :ngrams => [1]) 
+    d2 = SClust::Util::Document.new("a b d e a", :filter=>filter, :ngrams => [1])
+    d3 = SClust::Util::Document.new("bob", :filter=>filter, :ngrams => [1])
+    d4 = SClust::Util::Document.new("frank a", :filter=>filter, :ngrams => [1])
 
-    dc + d1
-    dc + d2
-    dc + d3
-    dc + d4
+    dc << d1
+    dc << d2
+    dc << d3
+    dc << d4
 
     dc.terms.each do |k,v|
-    if k.original_word == "a"
-        assert(v == 3, "A appers in 3 documents out of 4.")
-        assert(dc.idf("a") > 2.2, "Known value for a")
-        assert(dc.idf("a") < 2.3, "Known value for a")
-      end
+	if k == "a"
+	    assert(v == 6, "A appers in #{v} documents out of 4.")
+	    assert(dc.idf("a") > 0.2, "Known value for a")
+	    assert(dc.idf("a") < 0.3, "Known value for a")
+	end
     end
+
+    print("TERMS: ")
+    d1.words.each { |w| print "#{w}, " }
+    assert(d1.tf('a') * d1.words.size == 3)
   end
 end

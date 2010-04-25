@@ -62,8 +62,8 @@ module SClust
             # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
             def initialize(text, opts={})
                 
-                @text = text
-                @userData = opts[:userData]
+                @text     = text             # The raw document. Never changed.
+                @userData = opts[:userData]  # Options!
         
                 opts[:ngrams]    ||= [ 1, 2, 3 ]
                 opts[:filter]    ||= DocumentTermFilter.new()
@@ -71,7 +71,6 @@ module SClust
                 
                 @words = opts[:tokenizer].apply(text).map { |word| 
                     opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
-                
         
                 @word_count = @words.size
                 @terms = Hash.new(0)
@@ -87,12 +86,12 @@ module SClust
                     # For each word in our list...
                     @words.length.times do |j| 
                         
-                        if ( n + j < @words.length )
+                        if ( n + j <= @words.length )
                             
                             term = @words[j]
                             
                             # Pick number of iterations based on how close to the end of the array we are.
-                            (( ( @words.length > n+j)?n:@words.length-j)-1).times { |ngram| term += " #{@words[j+ngram+1]}" }
+                            (( ( @words.length > n+j) ? n : @words.length-j)-1).times { |ngram| term += " #{@words[j+ngram+1]}" }
                             
                         end
         
@@ -104,24 +103,35 @@ module SClust
                     
                 end
         
-                @terms.each { |k,v| @terms[k] /= @terms.length }
-                
                 if opts.key?(:term_limit) and opts[:term_limit]
-                    new_terms = Hash.new(0)
-                    @terms.keys.sort {|x,y| -(x <=> y) }[0..opts[:term_limit].to_i].each { |key| new_terms[key] = @terms[key] }
-                    @terms=new_terms
+                     
+                    terms_to_delete = @terms.sort { |x, y| y[1] <=> x[1]}[opts[:term_limit].to_i..-1]
+                    
+                    if terms_to_delete
+                        terms_to_delete.each do |delete_me|
+                            @terms.delete(delete_me[0])
+                            @words.delete_if { |x| delete_me[0] == x}
+                        end
+                    end
+                    
+                    @wordcount = @words.size
                 end
         
             end
           
-            def term_frequency(term)
+            def term_count(term)
                 @terms[term]
+            end
+
+            def term_frequency(term)
+                @terms[term] / @words.size
             end
           
             alias tf term_frequency
         
+            # Each term and the term count passed to the given block. Divide the count by the total number of works to get the term frequency.
             def each_term(&call) 
-                terms.each_key { |k| yield k }
+                terms.each{ |k,v| yield(k, v) }
             end
         
             def has_term?(term)

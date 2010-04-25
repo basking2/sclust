@@ -126,15 +126,31 @@ module SClust
             #
             # Compute p(z_i|theta) * p(w|z_i,B). 
             #
-            def p_of_z(topic, word)
+            def p_of_z(topic, word, doc=nil)
                 
                 # Should we subtract the value from the denominator??
                 #((topic.words[word] - 1 + @beta)  / (topic.wordcount - topic.words[word] - 1 + @beta ) ) * 
                 #((topic.docs.size - 1 + @alpha) / (@doclist.size - @topics.docs.size - 1 + @alpha ))
                 
+                beta = @beta
+                
+                if ( doc )
+                    tf = doc.tf(word)
+                    
+                    if ( tf == 0 )
+                        @logger.error("TF is 0 for document #{doc} and word #{word}")
+                        exit
+                    else
+                        #@logger.error("TF is OK")
+                        beta = 1 / (doc.tf(word) - @doc_collection.idf(word))
+                    end
+                end
+                
+                alpha = @alpha
+                
                 # Alternate forumla. Denominator changed.
-                ((topic.words[word] - 1 + @beta)  / (topic.wordcount - 1 + @beta ) ) * 
-                ((topic.docs.size - 1 + @alpha) / (@doclist.size - 1 + @alpha ))
+                ((topic.words[word] - 1 + beta)  / (topic.wordcount - 1 + beta ) ) * 
+                ((topic.docs.size - 1 + alpha) / (@doclist.size - topic.docs.size - 1 + alpha ))
             
             end
 
@@ -143,8 +159,8 @@ module SClust
             end
             
             def lda_setup()
-                @beta  = 0.01
-                @alpha = 50.0 / @topics.length
+                @beta  = 0.0001
+                @alpha = 0.0001 #/ @topics.length
                 
                 build_randomized_index_into_words()
                 
@@ -166,19 +182,17 @@ module SClust
                 each_radomized_word_index do |random_word_index|
                     
                     random_word = @wordlist[random_word_index]
-                    
+                    doc         = @word2doc[random_word_index]
+
                     zdist = []
                     ztotal = 0.0 # Track actual total incase the sum of zdist isn't quite 1.0.
-
-                    #print("ZDIST: (")
+                    
                     # Compute distribution over z for word i.
                     @topics.each do |topic| 
-                        z = p_of_z(topic, random_word) 
+                        z = p_of_z(topic, random_word, doc) 
                         ztotal += z 
                         zdist << z
-                    #    print("#{z}, ")
                     end
-                    #puts(")")
                                         
                     r      = rand * ztotal # Random value to pick topic with.
                     zacc   = 0.0           # Accumulator of seen values of zdist[topici].
@@ -201,7 +215,6 @@ module SClust
                     next if @word2topic[random_word_index] == topici
 
                     # Remove word from previous topic.
-                    doc = @word2doc[random_word_index]
                     
                     if ( previous_topic.has_word_and_doc?(random_word, doc) )
                         topic.remove(random_word, doc)
