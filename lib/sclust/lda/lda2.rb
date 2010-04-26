@@ -235,10 +235,12 @@ module SClust
                 opts[:iterations] ||= @iterations
                 
                 unless (opts[:continue])
+                    @logger.info("Setting up to run LDA.")
                     lda_setup()
                 end
                 
                 opts[:iterations].times do |i|
+                    @logger.info { "LDA Iteration #{i} / #{opts[:iterations]}"}
                     lda_once()
                 end
             end
