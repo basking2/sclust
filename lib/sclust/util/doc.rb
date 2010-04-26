@@ -71,7 +71,6 @@ module SClust
                 
                 @words = opts[:tokenizer].apply(text).map { |word| 
                     opts[:filter].apply(word) }.delete_if { |x| x.nil? or x=~/^\s+$/ }
-                
         
                 @word_count = @words.size
                 @terms = Hash.new(0)
@@ -87,12 +86,12 @@ module SClust
                     # For each word in our list...
                     @words.length.times do |j| 
                         
-                        if ( n + j < @words.length )
+                        if ( n + j <= @words.length )
                             
                             term = @words[j]
                             
                             # Pick number of iterations based on how close to the end of the array we are.
-                            (( ( @words.length > n+j)?n:@words.length-j)-1).times { |ngram| term += " #{@words[j+ngram+1]}" }
+                            (( ( @words.length > n+j) ? n : @words.length-j)-1).times { |ngram| term += " #{@words[j+ngram+1]}" }
                             
                         end
         
@@ -104,8 +103,6 @@ module SClust
                     
                 end
         
-                @terms.each { |k,v| @terms[k] /= @terms.length }
-                
                 if opts.key?(:term_limit) and opts[:term_limit]
                     new_terms = Hash.new(0)
                     @terms.keys.sort {|x,y| -(x <=> y) }[0..opts[:term_limit].to_i].each { |key| new_terms[key] = @terms[key] }
@@ -114,14 +111,19 @@ module SClust
         
             end
           
-            def term_frequency(term)
+            def term_count(term)
                 @terms[term]
+            end
+
+            def term_frequency(term)
+                @terms[term] / @words.size
             end
           
             alias tf term_frequency
         
+            # Each term and the term count passed to the given block. Divide the count by the total number of works to get the term frequency.
             def each_term(&call) 
-                terms.each_key { |k| yield k }
+                terms.each{ |k,v| yield(k, v) }
             end
         
             def has_term?(term)
