@@ -38,7 +38,8 @@ require 'sclust/util/doc'
 require 'sclust/util/filters'
 require 'sclust/lda/lda2'
 
-Log4r::Outputter['default'] = Log4r::StderrOutputter.new($0)
+Log4r::StderrOutputter.new('default')
+Log4r::Outputter['default'].formatter = Log4r::PatternFormatter.new( :pattern => '%d %C: %m' , :date_pattern => '[%Y-%m-%d-%H:%M:%SZ%Z]')
 Log4r::Logger.root.level = Log4r::DEBUG
 Log4r::Logger.root.add( 'default' )
 
