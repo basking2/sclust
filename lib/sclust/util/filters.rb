@@ -180,7 +180,7 @@ module SClust
                 after(LowercaseFilter.new())
                 after(StopwordFilter.new())
                 after(TrimWhitespace.new())
-                after(StemFilter.new())
+                #after(StemFilter.new())
             end
             
             # Return nil if the term should be excluded. Otherwise the version of the term 
