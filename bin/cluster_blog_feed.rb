@@ -38,9 +38,13 @@ require 'sclust/util/doc'
 require 'sclust/util/filters'
 require 'sclust/lda/lda2'
 
-Log4r::Logger::root.level = 0
+Log4r::Outputter['default'] = Log4r::StderrOutputter.new($0)
+Log4r::Logger.root.level = Log4r::DEBUG
+Log4r::Logger.root.add( 'default' )
+
 $logger = Log4r::Logger.new($0)
-$logger.outputters = [ Log4r::StderrOutputter.new($0) ]
+$logger.add('default')
+$logger.info("Starting")
 
 $wwwagent = WWW::Mechanize.new()
 
@@ -120,29 +124,18 @@ end
 
 $config[:opmlFiles].each { |file| $config[:urlHashes] += parse_opml_file(file) }
 
-count = 1
-
 $null_filter = SClust::Util::NullFilter.new()
 
+count = 1
+
 if $config[:lda]
-
-    #clusterer = SClust::LDA::LDA.new()
-    #def addNewDoc(col, title, body, item)
-    #    col << SClust::Util::BasicDocument.new(body, :filter=>$null_filter)
-    #end
-    
     clusterer = SClust::LDA2::LDA2.new()    
-
-    def addNewDoc(col, title, body, item)
-        col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>1000)
-    end
 else
-    
     clusterer = SClust::KMean::DocumentClusterer.new()    
+end
 
-    def addNewDoc(col, title, body, item)
-        col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>1000)
-    end
+def addNewDoc(col, title, body, item)
+    col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>10000)
 end
 
 $config[:urlHashes].each do |url|

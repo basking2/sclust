@@ -62,8 +62,8 @@ module SClust
             # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
             def initialize(text, opts={})
                 
-                @text = text
-                @userData = opts[:userData]
+                @text     = text             # The raw document. Never changed.
+                @userData = opts[:userData]  # Options!
         
                 opts[:ngrams]    ||= [ 1, 2, 3 ]
                 opts[:filter]    ||= DocumentTermFilter.new()
@@ -104,9 +104,17 @@ module SClust
                 end
         
                 if opts.key?(:term_limit) and opts[:term_limit]
-                    new_terms = Hash.new(0)
-                    @terms.keys.sort {|x,y| -(x <=> y) }[0..opts[:term_limit].to_i].each { |key| new_terms[key] = @terms[key] }
-                    @terms=new_terms
+                     
+                    terms_to_delete = @terms.sort { |x, y| y[1] <=> x[1]}[opts[:term_limit].to_i..-1]
+                    
+                    if terms_to_delete
+                        terms_to_delete.each do |delete_me|
+                            @terms.delete(delete_me[0])
+                            @words.delete_if { |x| delete_me[0] == x}
+                        end
+                    end
+                    
+                    @wordcount = @words.size
                 end
         
             end
