@@ -39,7 +39,7 @@ require 'sclust/util/filters'
 require 'sclust/lda/lda2'
 
 Log4r::StderrOutputter.new('default')
-Log4r::Outputter['default'].formatter = Log4r::PatternFormatter.new( :pattern => '%d %C: %m' , :date_pattern => '[%Y-%m-%d-%H:%M:%SZ%Z]')
+Log4r::Outputter['default'].formatter = Log4r::PatternFormatter.new( :pattern => '%d %C: %m' , :date_pattern => '[%Y-%m-%d-%H:%M:%S %Z]')
 Log4r::Logger.root.level = Log4r::DEBUG
 Log4r::Logger.root.add( 'default' )
 
@@ -139,12 +139,14 @@ def addNewDoc(col, title, body, item)
     col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :term_limit=>10000)
 end
 
+document_list = []
+
 $config[:urlHashes].each do |url|
 
     $logger.info("Processing #{url['title']} #{count} / #{$config[:urlHashes].size}")
 
     begin
-        SClust::RSS::rss_to_documents(url['xmlUrl']) { |title, body, item| addNewDoc(clusterer, title, body, item) if body }
+        SClust::RSS::rss_to_documents(url['xmlUrl']) { |title, body, item| addNewDoc(document_list, title, body, item) if body }
     rescue Exception => e
         $logger.error("Error retrieving #{url['xmlUrl']}: #{e.message}. Skipping.")
         $logger.error(e.backtrace.join("\n"))
@@ -158,12 +160,24 @@ $config[:xmlFiles].each do |file|
     $logger.info("Processing file #{$config[:xmlFiles]}.")
     
     begin
-        SClust::RSS::rss_to_documents(File.new(file)) { |title, body, item| addNewDoc(clusterer, title, body, item) if body }
+        SClust::RSS::rss_to_documents(File.new(file)) { |title, body, item| addNewDoc(document_list, title, body, item) if body }
     rescue Exception => e
         $logger.error("Error processing file #{file}: #{e.message}. Skipping.")
         $logger.error(e.backtrace.join("\n"))
     end
 end
+
+#if document_list.size == 0
+#    $logger.info("Document list is 0 in size. Reading from cachefile.")
+#    document_list = YAML.load_file('documentcache')
+#else
+#    $logger.info("Storing documents into cache file.")
+#    File.open('documentcache', 'w') { |io| YAML::dump(document_list, io) ;io.close }
+#end
+
+$logger.info("Putting #{document_list.size} documents into clusterer.")
+
+document_list.each { |document| clusterer << document }
 
 # Create the right clustering tool for use with the right cluster collection.
 
