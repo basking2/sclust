@@ -48,7 +48,7 @@ module SClust
             def has_word_and_doc?(word, doc)
                 @words.member?(word) and @docs.member?(doc)
             end
-            
+                        
             def add(word, doc)
                 @words[word] += 1
                 @wordcount   += 1
@@ -73,7 +73,7 @@ module SClust
                 @iterations  = 3
                 @wordlist    = []
                 @doclist     = []
-                @logger      = Log4r::Logger.new('Clusterer')
+                @logger      = Log4r::Logger.new(self.class.to_s)
                 @logger.add('default')
 
                 # Used for inverse document frequency values.
@@ -132,10 +132,6 @@ module SClust
             #
             def p_of_z(topic, word, doc=nil)
                 
-                # Should we subtract the value from the denominator??
-                #((topic.words[word] - 1 + @beta)  / (topic.wordcount - topic.words[word] - 1 + @beta ) ) * 
-                #((topic.docs.size - 1 + @alpha) / (@doclist.size - @topics.docs.size - 1 + @alpha ))
-                
                 beta = @beta
                 
                 if ( doc )
@@ -152,9 +148,19 @@ module SClust
                 
                 alpha = @alpha
                 
+                # Some loud error checking
+                #raise Exception.new("FAIL, FAIL!") if topic.words[word] - 1 + beta < 0
+                #raise Exception.new("FAIL, FAIL!") if topic.wordcount - 1 + beta < 0
+                #raise Exception.new("FAIL, FAIL!") if topic.docs.size - 1 + alpha < 0
+                #raise Exception.new("FAIL, FAIL!") if @doclist.size - topic.docs.size - 1 + alpha < 0
+                
+                # Should we subtract the value from the denominator??
+                #((topic.words[word] - 1 + @beta)  / (topic.wordcount - topic.words[word] - 1 + @beta ) ) * 
+                #((topic.docs.size - 1 + @alpha) / (@doclist.size - @topics.docs.size - 1 + @alpha ))
+                
                 # Alternate forumla. Denominator changed.
-                ((topic.words[word] - 1 + beta)  / (topic.wordcount - 1 + beta ) ) * 
-                ((topic.docs.size - 1 + alpha) / (@doclist.size - topic.docs.size - 1 + alpha ))
+                ((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) ) * 
+                ((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
             
             end
 
@@ -163,7 +169,7 @@ module SClust
             end
             
             def lda_setup()
-                @beta  = 0.0001
+                @beta  = 1.0    # Ensure this at or above 1 so the math in p_of_z "works out."
                 @alpha = 0.0001 #/ @topics.length
                 
                 build_randomized_index_into_words()
@@ -192,40 +198,38 @@ module SClust
                     ztotal = 0.0 # Track actual total incase the sum of zdist isn't quite 1.0.
                     
                     # Compute distribution over z for word i.
-                    @topics.each do |topic| 
+                    @topics.each do |topic|
                         z = p_of_z(topic, random_word, doc) 
                         ztotal += z 
                         zdist << z
                     end
                                         
                     r      = rand * ztotal # Random value to pick topic with.
-                    zacc   = 0.0           # Accumulator of seen values of zdist[topici].
-                    topici = (rand() * @topics.size).to_i 
+                    zacc   = 0.0           # Accumulator of seen values of zdist[topic_i].
+                    topic_i = (rand() * @topics.size).to_i 
 
                     # Pick a topic, t
                     
                     catch(:picked_topic) do
-                        @topics.each_index do |topici|
-                            zacc += zdist[topici]
+                        @topics.each_index do |topic_i|
+                            zacc += zdist[topic_i]
                             throw :picked_topic if r < zacc
                         end
                     end
                     
-                    topic = @topics[topici]
+                    topic = @topics[topic_i]
                     
                     previous_topic = @topics[@word2topic[random_word_index]]
 
                     # Skip if src and dst topic are the same                    
-                    next if @word2topic[random_word_index] == topici
+                    next if @word2topic[random_word_index] == topic_i
 
                     # Remove word from previous topic.
                     
-                    if ( previous_topic.has_word_and_doc?(random_word, doc) )
-                        topic.remove(random_word, doc)
-                    end
+                    previous_topic.remove(random_word, doc) if previous_topic.has_word_and_doc?(random_word, doc)
                     
                     # Add word to chosen topic.
-                    @word2topic[random_word_index] = topici           # Record that this word goes to this topic.
+                    @word2topic[random_word_index] = topic_i           # Record that this word goes to this topic.
                     topic.add(random_word, doc)
                     
                 end
@@ -240,7 +244,7 @@ module SClust
                 end
                 
                 opts[:iterations].times do |i|
-                    @logger.info { "LDA Iteration #{i} / #{opts[:iterations]}"}
+                    @logger.info { "LDA Iteration #{i+1} / #{opts[:iterations]}"}
                     lda_once()
                 end
             end
