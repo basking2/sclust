@@ -43,7 +43,8 @@ module SClust
             attr_reader :logger
             
             def initialize()
-                @logger = Log4r::Logger.new("SClust::KMean::DocumentCollection")
+                @logger = Log4r::Logger.new(self.class.to_s)
+                @logger.add('default')
                 @terms   = SClust::Util::SparseVector.new(0)
                 @doclist = []
             end
@@ -51,13 +52,16 @@ module SClust
             # Add a document to the collection and adjust the @terms attribute to store any new terms in the document.
             # The document is also added to the @doclist attribute.
             def <<(d)
-                d.each_term do |term, frequency|
-                  @terms[term] += frequency
-                end
+                
+                seen_terms = {}
+                
+                d.each_term { |term, frequency| seen_terms[term] = 1 }
+                
+                seen_terms.each_key { |term| @terms[term] += 1 }
                 
                 @doclist<<d
                 
-                @logger.info("There are #{@doclist.size} documents and #{@terms.size} terms.")
+                #@logger.info("There are #{@doclist.size} documents and #{@terms.size} terms.")
             
                 self
             end
