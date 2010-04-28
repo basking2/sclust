@@ -142,7 +142,8 @@ module SClust
                         exit
                     else
                         #@logger.error("TF is OK")
-                        beta = 1 / (doc.tf(word) - @doc_collection.idf(word))
+                        # The * 10.0 is somewhat arbitrary. It bumps-up the impact a high tf-idf has on the words chances of being in a given topic.
+                        beta = (doc.tf(word) - @doc_collection.idf(word)) * 10.0
                     end
                 end
                 
