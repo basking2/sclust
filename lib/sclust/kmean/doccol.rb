@@ -95,7 +95,7 @@ module SClust
             end
         
             def inverse_document_frequency(term)
-                Math.log( @terms.length / @terms[term] )
+                Math.log( @doclist.length / @terms[term] )
             end
         
             alias idf inverse_document_frequency
