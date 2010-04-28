@@ -26,6 +26,13 @@ require 'test/unit'
 
 require 'sclust/lda/lda2'
 require 'sclust/util/doc'
+require 'log4r'
+
+Log4r::StderrOutputter.new('default')
+Log4r::Outputter['default'].formatter = Log4r::PatternFormatter.new( :pattern => '%d %C: %m' , :date_pattern => '[%Y-%m-%d-%H:%M:%S %Z]')
+Log4r::Logger.root.level = Log4r::DEBUG
+Log4r::Logger.root.add( 'default' )
+
 
 class DocTests < Test::Unit::TestCase
 
@@ -54,7 +61,7 @@ class DocTests < Test::Unit::TestCase
         lda << SClust::Util::Document.new("x y 7", :filter => @null_filter)
         lda << SClust::Util::Document.new("x y 8", :filter => @null_filter)
 
-        lda.lda(:iterations=>50)
+        lda.lda(:iterations=>100)
 
         lda.get_max_terms(100).each do |topic|
             puts("---------- Topic ---------- ")
