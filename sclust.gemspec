@@ -2,14 +2,14 @@ require 'rake'
 
 Gem::Specification.new do |spec|
     spec.name = 'sclust'
-    spec.version = '1.0.0'
+    spec.version = '2.0.0'
     spec.platform = Gem::Platform::RUBY
-    spec.summary = 'k-mean clustering.'
+    spec.summary = 'k-mean/lda clustering.'
     spec.email = 'basking2@rubyforge.org.com'
     spec.homepage = 'http://sclust.rubyforge.org'
     spec.rubyforge_project='http://sclust.rubyforge.org/'
     spec.author = 'Sam Baskinger'
-    spec.description='A k-mean text clustering library for ruby.'
+    spec.description='A k-mean and LDA text clustering library for ruby.'
     spec.required_ruby_version = '>= 1.6.8'
     # spec.require_paths = [ 'lib' ] (defalt)
     spec.require_paths = [ 'lib' ]
