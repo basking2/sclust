@@ -57,14 +57,49 @@ module SClust
                 
                 d.each_term { |term, frequency| seen_terms[term] = 1 }
                 
-                seen_terms.each_key { |term| @terms[term] += 1 }
+                if ( seen_terms.size > 0 )
                 
-                @doclist<<d
+                    seen_terms.each_key { |term| @terms[term] += 1 }
+                    
+                    @doclist<<d
+                    
+                    #@logger.info("There are #{@doclist.size} documents and #{@terms.size} terms.")
+                end
                 
-                #@logger.info("There are #{@doclist.size} documents and #{@terms.size} terms.")
-            
                 self
             end
+            
+            # The sum of the terms divided by the documents. If the document only has 1-gram terms, then this
+            # number will always be less than the number of words per document. If, however, you enable
+            # 2-grams, 3-grams, etc in a document, this value will not corrolate perfectly with the word count.
+            def average_terms_per_document()
+                @terms.reduce(0.0) { |count, keyval_pair| count + keyval_pair[1] } / @doclist.size
+            end
+
+            # Number of words that make up a document. Words are no unique like terms are.
+            # Two occurences of the word "the" are a single term "the". Get it? :) Great. One caveate is that
+            # a "term" is typically a 1-gram, that is 1 word is 1 term. It is possible for a term to be constructed
+            # of two or more words (an 2-gram, 3-gram, ... n-gram) in which case this relationship will vary
+            # widely.
+            def average_words_per_document()
+                @doclist.reduce(0.0) { |count, doc| count + doc.words.size } / @doclist.size
+            end
+            
+            # Return the size of the document list.
+            def document_count()
+                @doclist.size
+            end
+            
+            # Sum all words
+            def word_count()
+                @doclist.reduce(0) { |count, doc| count+doc.words.size }
+            end
+            
+            # Return the size of the term vector
+            def term_count()
+                @terms.size
+            end
+
             
             def drop_terms(min_frequency=0.10, max_frequency=0.80)
                 
