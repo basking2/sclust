@@ -25,6 +25,7 @@ require 'rubygems'
 require 'sclust/util/word'
 require 'sclust/kmean/doccol'
 require 'log4r'
+require 'sclust/util/weightedmovingaverage'
 
 module SClust
     
@@ -33,7 +34,7 @@ module SClust
     module LDA2
         
         class Topic
-
+            
             attr_reader :words, :wordcount, :docs
             attr_writer :words, :wordcount, :docs
 
@@ -65,6 +66,8 @@ module SClust
         
         class LDA2
             
+            attr_reader :document_collection
+            
             attr_reader :logger, :iterations, :doclist, :topics
             attr_writer :logger, :iterations, :doclist
             
@@ -75,9 +78,10 @@ module SClust
                 @doclist     = []
                 @logger      = Log4r::Logger.new(self.class.to_s)
                 @logger.add('default')
+                @topic_change_rate = SClust::Util::WeightedMovingAverage.new(0.05, 0.0)
 
                 # Used for inverse document frequency values.
-                @doc_collection = SClust::KMean::DocumentCollection.new()
+                @document_collection = SClust::KMean::DocumentCollection.new()
                 
                 # Array the same size as @wordlist but stores the document object at index i
                 # that produced @wordlist[i].
@@ -99,7 +103,7 @@ module SClust
             def <<(document)
                 @doclist        << document
                 
-                @doc_collection << document
+                @document_collection << document
                 
                 @wordlist       += document.words
 
@@ -143,7 +147,7 @@ module SClust
                     else
                         #@logger.error("TF is OK")
                         # The * 10.0 is somewhat arbitrary. It bumps-up the impact a high tf-idf has on the words chances of being in a given topic.
-                        beta = (doc.tf(word) - @doc_collection.idf(word)) * 10.0
+                        beta = (doc.tf(word) - @document_collection.idf(word)) * 10.0
                     end
                 end
                 
@@ -223,17 +227,29 @@ module SClust
                     previous_topic = @topics[@word2topic[random_word_index]]
 
                     # Skip if src and dst topic are the same                    
-                    next if @word2topic[random_word_index] == topic_i
+                    if @word2topic[random_word_index] == topic_i
+                        
+                        @topic_change_rate.adjust(0.0) # adjust...
 
-                    # Remove word from previous topic.
-                    
-                    previous_topic.remove(random_word, doc) if previous_topic.has_word_and_doc?(random_word, doc)
-                    
-                    # Add word to chosen topic.
-                    @word2topic[random_word_index] = topic_i           # Record that this word goes to this topic.
-                    topic.add(random_word, doc)
-                    
+                    else
+                        
+                        # Adjust the topic change rate. This is how we will trac convergence. 
+                        # Few topic moves (comparatively) and we're done.                    
+                        @topic_change_rate.adjust(1.0)
+    
+                        # Remove word from previous topic.
+                        
+                        previous_topic.remove(random_word, doc) if previous_topic.has_word_and_doc?(random_word, doc)
+                        
+                        # Add word to chosen topic.
+                        @word2topic[random_word_index] = topic_i           # Record that this word goes to this topic.
+                        
+                        topic.add(random_word, doc)
+                        
+                    end
                 end
+                
+                $logger.info { "Topic change rate: #{@topic_change_rate.value}" }
             end
             
             def lda(opts={})
@@ -267,7 +283,7 @@ module SClust
                 
                 # Yes, rev the comparison so the list sorts backwards.
                 tupleList.sort! { |x, y| y.weight <=> x.weight }
-                
+
                 tupleList[0...n]
                 
             end
