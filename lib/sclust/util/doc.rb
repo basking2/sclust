@@ -23,14 +23,13 @@
 # 
 
 require 'sclust/util/filters'
+require 'log4r'
 
 module SClust
     module Util
         
         class BasicDocumentCollection < Array
         end
-        
-
         
         # This is a very simple document model, more simple than you would typically
         # want for clustering. However, it is used by SClust::LDA::LDA.
@@ -56,10 +55,16 @@ module SClust
         # is backed by a body of text but also breaks it up into 
         # a set of n-grams using a DocumentTokenizer and a DocumentTermFilter.
         class Document
+            
+            @@logger = Log4r::Logger.new(self.class.to_s)
+            @@logger.add('default')
+            @@logger.level = Log4r::DEBUG
         
             attr_reader :terms, :userDate, :filter, :word_count, :words
         
             # Takes { :userData, :ngrams => [1,2,3], :filter => Filter, :term_limit => 100 }
+            #  also { :min_freq => [ minimum frequency below which a term is removed from the document. ] }
+            #  also { :max_freq => [ maximum frequency above which a term is removed from the document. ] }
             def initialize(text, opts={})
                 
                 @text     = text             # The raw document. Never changed.
@@ -100,23 +105,26 @@ module SClust
                         builtGramCounts[n] += 1
         
                     end
-                    
                 end
         
-                if opts.key?(:term_limit) and opts[:term_limit]
-                     
-                    terms_to_delete = @terms.sort { |x, y| y[1] <=> x[1]}[opts[:term_limit].to_i..-1]
+                
+                if opts.key?(:min_freq) or opts.key?(:max_freq)
+                    minwords = @words.size * ( opts[:min_freq] || 0.0   )
+                    maxwords = @words.size * ( opts[:max_freq] || 1.0 )
                     
-                    if terms_to_delete
-                        terms_to_delete.each do |delete_me|
-                            @terms.delete(delete_me[0])
-                            @words.delete_if { |x| delete_me[0] == x}
+                    #@@logger.debug { "Keeping terms between #{minwords} and #{maxwords} out of a total of #{@words.size}" }
+
+                    @terms.delete_if do |term, freq|
+                        if ( freq < minwords or freq > maxwords ) 
+                            @words.delete_if { |x| term == x}
+                            true
+                        else 
+                            false
                         end
                     end
                     
                     @wordcount = @words.size
                 end
-        
             end
           
             def term_count(term)
