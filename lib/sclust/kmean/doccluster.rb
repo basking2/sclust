@@ -33,6 +33,8 @@ module SClust
         # to allow for adding Document objects.
         class DocumentClusterer < Clusterer
             
+            attr_reader :document_collection
+            
             def initialize(documentCollection=[])
                 @document_collection = SClust::KMean::DocumentCollection.new()
                 super()
