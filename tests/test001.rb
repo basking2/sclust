@@ -23,7 +23,7 @@
 # 
 
 require 'sclust/util/doc'
-require 'sclust/kmean/doccol'
+require 'sclust/util/doccol'
 require 'sclust/util/filters'
 require 'test/unit'
 

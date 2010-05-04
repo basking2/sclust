@@ -23,7 +23,7 @@
 # 
 require 'rubygems'
 require 'sclust/util/word'
-require 'sclust/kmean/doccol'
+require 'sclust/util/doccol'
 require 'log4r'
 require 'sclust/util/weightedmovingaverage'
 
@@ -81,7 +81,7 @@ module SClust
                 @topic_change_rate = SClust::Util::WeightedMovingAverage.new(0.05, 0.0)
 
                 # Used for inverse document frequency values.
-                @document_collection = SClust::KMean::DocumentCollection.new()
+                @document_collection = SClust::Util::DocumentCollection.new()
                 
                 # Array the same size as @wordlist but stores the document object at index i
                 # that produced @wordlist[i].
@@ -110,6 +110,28 @@ module SClust
                 document.words.size.times { @word2doc << document }
             end
             
+            # If you edit the document collection behind the scenes, you need to run this to avoid
+            # terms with 0 showing up.
+            def rebuild_document_collection()
+                
+                @logger.debug { "Collection now has #{@doclist.size} documents, #{@wordlist.size} words."}
+                @logger.info("Rebuilding document collection and word list.")                
+                
+                dl = @document_collection.doclist
+
+                @doclist = []
+
+                @document_collection = SClust::Util::DocumentCollection.new()
+                
+                @wordlist = []
+                
+                @word2doc = []
+                
+                dl.each { |doc| self << doc }
+                
+                @logger.debug { "Collection now has #{@doclist.size} documents, #{@wordlist.size} words."}
+                
+            end
             
             # Build a wordlist index array. This is an array that contains indexes into @wordlist.
             # However, instead of being simply {0,1,2,3...} this array is randomized so that
@@ -139,7 +161,7 @@ module SClust
                 beta = @beta
                 
                 if ( doc )
-                    tf = doc.tf(word)
+                    tf = doc.tf(word).to_f
                     
                     if ( tf == 0 )
                         @logger.error("TF is 0 for document #{doc} and word #{word}")
@@ -147,7 +169,13 @@ module SClust
                     else
                         #@logger.error("TF is OK")
                         # The * 10.0 is somewhat arbitrary. It bumps-up the impact a high tf-idf has on the words chances of being in a given topic.
-                        beta = (doc.tf(word) - @document_collection.idf(word)) * 10.0
+                        
+                        #beta = (tf - @document_collection.idf(word)) * 10.0
+                        #beta = (tf * 10.0
+                        
+                        beta = (tf / doc.words.size.to_f) * 100.0
+                        
+                        beta = @beta if beta < @beta
                     end
                 end
                 
@@ -175,7 +203,7 @@ module SClust
             
             def lda_setup()
                 @beta  = 1.0    # Ensure this at or above 1 so the math in p_of_z "works out."
-                @alpha = 0.0001 #/ @topics.length
+                @alpha = 100.0 #/ @topics.length
                 
                 build_randomized_index_into_words()
                 

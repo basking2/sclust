@@ -118,9 +118,16 @@ module SClust
             end
         end
         
-        class StemFilter < Filter
+        # Similar to StemFilter, but this will wrap the word in a Filter::StemmedWord object.
+        class StemmedWordFilter < Filter
             def filter(term)
                 Filter::StemmedWord.new(term.stem, term)
+            end
+        end
+        
+        class StemFilter < Filter
+            def filter(term)
+                term.stem
             end
         end
         

@@ -41,7 +41,7 @@ $logger.add('default')
 $logger.info("Starting")
 
 require 'sclust/kmean/doccluster'
-require 'sclust/kmean/doccol'
+require 'sclust/util/doccol'
 require 'sclust/util/rss'
 require 'sclust/util/doc'
 require 'sclust/util/filters'
@@ -147,7 +147,8 @@ else
 end
 
 def addNewDoc(col, title, body, item)
-    col << SClust::Util::Document.new(body, :userData=>item, :ngrams=>$config[:ngrams], :min_freq=>$config[:mintermfreq], :max_freq=>$config[:maxtermfreq])
+    text = "#{title} #{body}"
+    col << SClust::Util::Document.new(text, :userData=>item, :ngrams=>$config[:ngrams], :min_freq=>$config[:mintermfreq], :max_freq=>$config[:maxtermfreq])
 end
 
 document_list = []
@@ -178,13 +179,13 @@ $config[:xmlFiles].each do |file|
     end
 end
 
-#if document_list.size == 0
-#    $logger.info("Document list is 0 in size. Reading from cachefile.")
-#    document_list = YAML.load_file('documentcache')
-#else
-#    $logger.info("Storing documents into cache file.")
-#    File.open('documentcache', 'w') { |io| YAML::dump(document_list, io) ;io.close }
-#end
+if document_list.size == 0
+    $logger.info("Document list is 0 in size. Reading from cachefile.")
+    YAML.load_file('documentcache').each { |d| addNewDoc(document_list, d, "", nil) }
+else
+    $logger.info("Storing documents into cache file.")
+    File.open('documentcache', 'w') { |io| YAML::dump(document_list.map {|d| d.text} , io) }
+end
 
 $logger.info("Putting #{document_list.size} documents into clusterer.")
 
@@ -194,6 +195,8 @@ $logger.info("Avg Terms/Doc: #{clusterer.document_collection.average_terms_per_d
 
 $logger.info("Documents: #{clusterer.document_collection.document_count} Terms: #{clusterer.document_collection.term_count} Words: #{clusterer.document_collection.word_count}")
 
+clusterer.document_collection.filter_df()
+clusterer.rebuild_document_collection()
 
 $logger.debug("-------- START TF-IDF INFORMATION ----------")
 
