@@ -6,6 +6,7 @@ module SClust
         class WeightedMovingAverage
             
             attr_reader :weight, :value
+            attr_writer :weight, :value
             
             def initialize(weight, initial_value = 0.0)
                 

@@ -174,7 +174,6 @@ module SClust
                         # The * 10.0 is somewhat arbitrary. It bumps-up the impact a high tf-idf has on the words chances of being in a given topic.
                         
                         #beta = (tf - @document_collection.idf(word)) * 10.0
-                        #beta = (tf * 10.0
                         
                         beta = (tf / doc.words.size.to_f)
                         
@@ -182,7 +181,6 @@ module SClust
                     end
                 end
                 
-                alpha = @alpha
                 
                 # Some loud error checking
                 #raise Exception.new("FAIL, FAIL!") if topic.words[word] - 1 + beta < 0
@@ -196,7 +194,7 @@ module SClust
                 
                 word_prob_avg = ((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) )
                 #doc_prob_avg  = ((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
-                doc_prob_avg  = ((topic.docs.size - 1.0 + alpha) / (@doclist.size - 1.0 + alpha ))
+                doc_prob_avg  = ((topic.docs.size - 1.0 + @alpha) / (@doclist.size - 1.0 + @alpha ))
                 
                 
                 @word_prob_avg.adjust(word_prob_avg)
@@ -219,8 +217,8 @@ module SClust
             end
             
             def lda_setup()
-                @beta  = 1.0    # Ensure this at or above 1 so the math in p_of_z "works out."
-                @alpha = ( @doclist.size / @topics.length ).to_f
+                @beta  = 0.01 
+                @alpha = 1.0 #( @doclist.size / @topics.length ).to_f
                 
                 build_randomized_index_into_words()
                 
@@ -234,6 +232,8 @@ module SClust
                     
                     @topics[topic].add(@wordlist[i], @word2doc[i])
                 end
+                
+                @topic_change_rate.weight = 1.0 / @wordlist.size
                 
             end
             
