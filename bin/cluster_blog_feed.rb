@@ -151,6 +151,10 @@ def addNewDoc(col, title, body, item)
     col << SClust::Util::Document.new(text, :userData=>item, :ngrams=>$config[:ngrams], :min_freq=>$config[:mintermfreq], :max_freq=>$config[:maxtermfreq])
 end
 
+$logger.info(" ----- Config block ----- ")
+$config.each { |k,v| $logger.info(" ---- #{k}: #{v}") }
+$logger.info(" ----- End config block ----- ")
+
 document_list = []
 
 $config[:urlHashes].each do |url|
@@ -198,43 +202,46 @@ $logger.info("Documents: #{clusterer.document_collection.document_count} Terms: 
 clusterer.document_collection.filter_df()
 clusterer.rebuild_document_collection()
 
-$logger.debug("-------- START TF-IDF INFORMATION ----------")
-
 # OUTPUT Some Stats for debugging.
-
-term_debug_info = []
-
-$logger.debug("Building term frequency data list.")
-
-clusterer.document_collection.terms.each do |term, df|
+def print_term_debug_info(clusterer)
+    $logger.debug("-------- START TF-IDF INFORMATION ----------")
     
-    avg_tf = 0.0
-    tf_count = 0
+    term_debug_info = []
     
-    # Compute average TF for documents that contain the term.
-    clusterer.document_collection.doclist.each do |doc|
-        tf = doc.term_frequency(term)
+    $logger.debug("Building term frequency data list.")
+    
+    clusterer.document_collection.terms.each do |term, df|
         
-        if ( tf > 0 )
-            avg_tf   += tf
-            tf_count += 1
+        avg_tf = 0.0
+        tf_count = 0
+        
+        # Compute average TF for documents that contain the term.
+        clusterer.document_collection.doclist.each do |doc|
+            tf = doc.term_frequency(term)
+            
+            if ( tf > 0 )
+                avg_tf   += tf
+                tf_count += 1
+            end
         end
+        
+        avg_tf /= tf_count
+        idf     = clusterer.document_collection.inverse_document_frequency(term)
+        
+        term_debug_info << { :term => term, :df => df, :idf => idf, :tfidf => (avg_tf - idf), :avg_tf => avg_tf }
+    end
+
+    $logger.debug("Sorting list, least to greatest.")
+    
+    term_debug_info.sort { |a,b| a[:tfidf] <=> b[:tfidf] }.each do |r|
+        $logger.debug { "Term: #{r[:term]}\tDF: #{r[:df]}\tIDF: #{r[:idf]}\tAvgTF: #{r[:avg_tf]}\tTF-IDF: #{r[:tfidf]}"}
     end
     
-    avg_tf /= tf_count
-    idf     = clusterer.document_collection.inverse_document_frequency(term)
-    
-    term_debug_info << { :term => term, :df => df, :idf => idf, :tfidf => (avg_tf - idf), :avg_tf => avg_tf }
+    $logger.debug("-------- END TF-IDF INFORMATION ----------")
 end
 
-$logger.debug("Sorting list, least to greatest.")
+# print_term_debug_info(clusterer)
 
-term_debug_info.sort { |a,b| a[:tfidf] <=> b[:tfidf] } . each do |r|
-
-    $logger.debug { "Term: #{r[:term]}\tDF: #{r[:df]}\tIDF: #{r[:idf]}\tAvgTF: #{r[:avg_tf]}\tTF-IDF: #{r[:tfidf]}"}
-end
-
-$logger.debug("-------- END TF-IDF INFORMATION ----------")
 # Create the right clustering tool for use with the right cluster collection.
 
 clusterer.topics=$config[:topics]
