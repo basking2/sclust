@@ -59,8 +59,7 @@ module SClust
             def remove(word, doc)
                 @words[word] -= 1
                 @wordcount   -= 1
-                @docs[doc]   -= 1
-                @docs.delete(doc) if @docs[doc] <= 0
+                @docs.delete(doc) if (@docs[doc] -= 1 ) < 0 # NOTE: Sparse Vector deletes when @docs[doc] == 0.
             end
         end
         
@@ -79,6 +78,8 @@ module SClust
                 @logger      = Log4r::Logger.new(self.class.to_s)
                 @logger.add('default')
                 @topic_change_rate = SClust::Util::WeightedMovingAverage.new(0.05, 0.0)
+                @word_prob_avg = SClust::Util::WeightedMovingAverage.new(0.05, 0.0)
+                @doc_prob_avg = SClust::Util::WeightedMovingAverage.new(0.05, 0.0)
 
                 # Used for inverse document frequency values.
                 @document_collection = SClust::Util::DocumentCollection.new()
@@ -160,6 +161,8 @@ module SClust
                 
                 beta = @beta
                 
+                doc = nil
+                
                 if ( doc )
                     tf = doc.tf(word).to_f
                     
@@ -173,7 +176,7 @@ module SClust
                         #beta = (tf - @document_collection.idf(word)) * 10.0
                         #beta = (tf * 10.0
                         
-                        beta = (tf / doc.words.size.to_f) * 100.0
+                        beta = (tf / doc.words.size.to_f)
                         
                         beta = @beta if beta < @beta
                     end
@@ -191,10 +194,24 @@ module SClust
                 #((topic.words[word] - 1 + @beta)  / (topic.wordcount - topic.words[word] - 1 + @beta ) ) * 
                 #((topic.docs.size - 1 + @alpha) / (@doclist.size - @topics.docs.size - 1 + @alpha ))
                 
+                word_prob_avg = ((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) )
+                #doc_prob_avg  = ((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
+                doc_prob_avg  = ((topic.docs.size - 1.0 + alpha) / (@doclist.size - 1.0 + alpha ))
+                
+                
+                @word_prob_avg.adjust(word_prob_avg)
+                @doc_prob_avg.adjust(doc_prob_avg)
+                
+                #@logger.info("WHAJL:KJ:LKDS: #{doc_prob_avg} #{topic.docs.size} #{@doclist.size}")
+                
+                # Final result.
+                doc_prob_avg * word_prob_avg
+                
                 # Alternate forumla. Denominator changed.
-                ((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) ) * 
-                ((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
-            
+                #((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) ) * 
+                #((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
+
+                
             end
 
             def each_radomized_word_index(&call)
@@ -203,7 +220,7 @@ module SClust
             
             def lda_setup()
                 @beta  = 1.0    # Ensure this at or above 1 so the math in p_of_z "works out."
-                @alpha = 100.0 #/ @topics.length
+                @alpha = ( @doclist.size / @topics.length ).to_f
                 
                 build_randomized_index_into_words()
                 
@@ -277,7 +294,7 @@ module SClust
                     end
                 end
                 
-                $logger.info { "Topic change rate: #{@topic_change_rate.value}" }
+                $logger.info { "Topic change rate: #{@topic_change_rate.value} Doc% #{ @doc_prob_avg.value} Word% #{ @word_prob_avg.value}" }
             end
             
             def lda(opts={})
