@@ -161,9 +161,7 @@ module SClust
                 
                 beta = @beta
                 
-                doc = nil
-                
-                if ( doc )
+                if (false && doc )
                     tf = doc.tf(word).to_f
                     
                     if ( tf == 0 )
@@ -194,7 +192,8 @@ module SClust
                 
                 word_prob_avg = ((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) )
                 #doc_prob_avg  = ((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
-                doc_prob_avg  = ((topic.docs.size - 1.0 + @alpha) / (@doclist.size - 1.0 + @alpha ))
+                #doc_prob_avg  = ((topic.docs.size - 1.0 + @alpha) / (@doclist.size - 1.0 + @alpha ))
+                doc_prob_avg  = ((topic.docs[doc] - 1.0 + @alpha) / (topic.wordcount - 1.0 + @alpha ))
                 
                 
                 @word_prob_avg.adjust(word_prob_avg)
