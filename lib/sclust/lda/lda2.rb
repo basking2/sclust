@@ -161,40 +161,17 @@ module SClust
                 
                 beta = @beta
                 
-                if (false && doc )
-                    tf = doc.tf(word).to_f
-                    
-                    if ( tf == 0 )
-                        @logger.error("TF is 0 for document #{doc} and word #{word}")
-                        exit
-                    else
-                        #@logger.error("TF is OK")
-                        # The * 10.0 is somewhat arbitrary. It bumps-up the impact a high tf-idf has on the words chances of being in a given topic.
-                        
-                        #beta = (tf - @document_collection.idf(word)) * 10.0
-                        
-                        beta = (tf / doc.words.size.to_f)
-                        
-                        beta = @beta if beta < @beta
-                    end
-                end
-                
-                
-                # Some loud error checking
-                #raise Exception.new("FAIL, FAIL!") if topic.words[word] - 1 + beta < 0
-                #raise Exception.new("FAIL, FAIL!") if topic.wordcount - 1 + beta < 0
-                #raise Exception.new("FAIL, FAIL!") if topic.docs.size - 1 + alpha < 0
-                #raise Exception.new("FAIL, FAIL!") if @doclist.size - topic.docs.size - 1 + alpha < 0
-                
-                # Should we subtract the value from the denominator??
-                #((topic.words[word] - 1 + @beta)  / (topic.wordcount - topic.words[word] - 1 + @beta ) ) * 
-                #((topic.docs.size - 1 + @alpha) / (@doclist.size - @topics.docs.size - 1 + @alpha ))
+                words_from_doc_in_topic = (doc.nil?) ?
+                    topic.docs.reduce(0.0) { |x, num| x+num[1] } : 
+                    words_from_doc_in_topic = topic.docs[doc]
                 
                 word_prob_avg = ((topic.words[word] - 1.0 + beta)  / (topic.wordcount - 1.0 + beta ) )
-                #doc_prob_avg  = ((topic.docs.size - 1.0 + alpha) / (@doclist.size - topic.docs.size - 1.0 + alpha ))
-                #doc_prob_avg  = ((topic.docs.size - 1.0 + @alpha) / (@doclist.size - 1.0 + @alpha ))
-                doc_prob_avg  = ((topic.docs[doc] - 1.0 + @alpha) / (topic.wordcount - 1.0 + @alpha ))
+                doc_prob_avg  = ((words_from_doc_in_topic - 1.0 + @alpha) / (topic.wordcount - 1.0 + @alpha ))
+
                 
+                # Stop-gap protection for when the denominator gets wonky.
+                doc_prob_avg = 0.0 if doc_prob_avg.nan? || doc_prob_avg < 0.0
+                word_prob_avg = 0.0 if word_prob_avg.nan? || word_prob_avg < 0.0
                 
                 @word_prob_avg.adjust(word_prob_avg)
                 @doc_prob_avg.adjust(doc_prob_avg)
