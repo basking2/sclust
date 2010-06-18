@@ -40,6 +40,14 @@ module SClust
             def to_s
                 @word
             end
+            
+            def hash
+                @word.hash
+            end
+            
+            def eql?(w)
+                @word.eql?(w)
+            end
         end
     end
 end

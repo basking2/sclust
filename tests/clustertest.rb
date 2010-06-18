@@ -24,38 +24,52 @@
 
 require 'test/unit'
 
-require 'sclust/doccluster'
+require 'sclust/util/doccol'
+require 'sclust/kmean/doccluster'
+require 'sclust/util/filters'
+
+Log4r::StderrOutputter.new('default')
+Log4r::Outputter['default'].formatter = Log4r::PatternFormatter.new( :pattern => '%d %C: %m' , :date_pattern => '[%Y-%m-%d-%H:%M:%S %Z]')
+Log4r::Logger.root.level = Log4r::DEBUG
+Log4r::Logger.root.add( 'default' )
+
+require 'sclust/util/doc'
+
+
+#$logger = Log4r::Logger.new($0)
+#$logger.add('default')
+#$logger.info("Starting")
+
 
 class ClusterTest < Test::Unit::TestCase
     
     def setup()
-        @dc = SClust::DocumentCollection.new()
-        filter = SClust::NullFilter.new()
-        d1 = SClust::Document.new("a b c d d e a q a b", :filter=>filter, :ngrams=>[1]) 
-        d2 = SClust::Document.new("a b d e a", :filter=>filter, :ngrams=>[1])
-        d3 = SClust::Document.new("bob", :filter=>filter, :ngrams=>[1])
-        d4 = SClust::Document.new("frank a", :filter=>filter, :ngrams=>[1])
-    
-        @dc + d1
-        @dc + d2
-        @dc + d3
-        @dc + d4
     end
     
     def teardown()
     end
     
     def test_makecluster()
-        c = SClust::DocumentClusterer.new(@dc)
+        filter = SClust::Util::NullFilter.new()
+        d1 = SClust::Util::Document.new("a b c d d e a q a b", :filter=>filter, :ngrams=>[1]) 
+        d2 = SClust::Util::Document.new("a b d e a", :filter=>filter, :ngrams=>[1])
+        d3 = SClust::Util::Document.new("bob", :filter=>filter, :ngrams=>[1])
+        d4 = SClust::Util::Document.new("frank a", :filter=>filter, :ngrams=>[1])
+
+        c = SClust::KMean::DocumentClusterer.new()
         
-        c.build_empty_clusters(3)
+        c << d1
+        c << d2
+        c << d3
+        c << d4
+        
+        c.topics = 3
 
         c.cluster
 
         c.each_cluster do |cl|
             puts('===================================')
             cl.center.get_max_terms(3).each do |t|
-                puts('-----------------------------------')
                 puts("Got Term: #{t} with value #{cl.center.get_term_value(t)}")
             end
         end

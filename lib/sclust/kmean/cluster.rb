@@ -98,7 +98,7 @@ module SClust
                 catch(:haveEnough) do
                     
                     sorted_values.each do |value|
-                    
+
                         result += values_to_terms[value]
 
                         throw :haveEnough if result.length >= n
@@ -162,6 +162,7 @@ module SClust
                 @points        = points
                 @clusters      = []
                 @logger        = Log4r::Logger.new('Clusterer')
+                @logger.add('default')
             
                 # Randomly select a few starting documents.
                 #build_empty_clusters('crp')
@@ -281,6 +282,13 @@ module SClust
                 r
             end
             
+            # If you edit the document collection behind the scenes in and LDA clusterer, you need to run 
+            # this to avoid terms with 0 showing up. However, K-Mean has so little document-related
+            # state that this method does nothing and is only here for API compatibility.
+            # We would like LDA and KMean implementations that are drop-in replacements.
+            def rebuild_document_collection()
+            end            
+
         end
     end
 end

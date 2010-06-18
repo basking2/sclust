@@ -35,7 +35,7 @@ module SClust
             
             attr_reader :document_collection
             
-            def initialize(documentCollection=[])
+            def initialize()
                 @document_collection = SClust::Util::DocumentCollection.new()
                 super()
             end
