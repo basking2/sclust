@@ -2,7 +2,7 @@ require 'rake'
 
 Gem::Specification.new do |spec|
     spec.name = 'sclust'
-    spec.version = '2.0.0'
+    spec.version = '2.1.0'
     spec.platform = Gem::Platform::RUBY
     spec.summary = 'k-mean/lda clustering.'
     spec.email = 'basking2@rubyforge.org.com'

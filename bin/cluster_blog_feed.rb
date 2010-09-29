@@ -25,6 +25,7 @@
 # 
 
 require 'rubygems'
+require 'csv'
 require 'log4r'
 require 'net/http'
 require 'uri'
@@ -50,7 +51,7 @@ require 'sclust/lda/lda2'
 
 $wwwagent = Mechanize.new()
 
-$config = { :opmlFiles=>[], :urlHashes => [], :iterations=>3, :topics => 3, :xmlFiles => [] , :ngrams => [], 
+$config = { :opmlFiles=>[], :urlHashes => [], :iterations=>3, :topics => 3, :xmlFiles => [] , :ngrams => [], :csvFiles => [],
     :topTerms => 20, 
     :maxtermfreq => 100.0, :mintermfreq => 0.0 }
 
@@ -63,6 +64,10 @@ OptionParser.new() do |opt|
     
     opt.on("-x", "--xml=String", "XML RSS feed files to read in.") do |v|
         $config[:xmlFiles] << v
+    end
+    
+    opt.on("-c", "--csv=String", "CSV files to read in.") do |v|
+        $config[:csvFiles] << v
     end
     
     opt.on("-t", "--terms=Integer", Integer, "Number of top-terms per cluster to display.") do |v|
@@ -172,8 +177,21 @@ $config[:urlHashes].each do |url|
 
 end
 
+$config[:csvFiles].each do |file|
+    $logger.info("Processing file #{file}.")
+
+    begin
+        CSV::foreach(file) do |row|
+            addNewDoc(document_list, row[0], row.join(' '), row)
+        end
+    rescue Exception => e
+        $logger.error("Error processing file #{file}: #{e.message}. Skipping.")
+        $logger.error(e.backtrace.join("\n"))
+    end
+end
+
 $config[:xmlFiles].each do |file|
-    $logger.info("Processing file #{$config[:xmlFiles]}.")
+    $logger.info("Processing file #{file}.")
     
     begin
         SClust::RSS::rss_to_documents(File.new(file)) { |title, body, item| addNewDoc(document_list, title, body, item) if body }
