@@ -52,8 +52,9 @@ module SClust
 
         class ClusterPoint
         
-            attr_reader :values, :cluster, :source_object
-            attr_writer :cluster, :source_object
+            attr_reader :values
+            
+            attr_accessor :cluster, :source_object
         
             # Initialize the ClusterPoint with a SparseVector or SparseLabeledVector.
             def initialize(sparse_vector, source_object = nil)

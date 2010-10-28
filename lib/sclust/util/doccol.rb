@@ -99,7 +99,6 @@ module SClust
             def term_count()
                 @terms.size
             end
-
             
             def drop_terms(min_frequency=0.10, max_frequency=0.80)
                 

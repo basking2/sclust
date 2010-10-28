@@ -26,6 +26,7 @@ module SClust
     
     module Util
     
+                
         #
         # Use cases:
         #
@@ -58,6 +59,8 @@ module SClust
             
         end
         
+        # A SparseVector with a bidirectional mapping from a user-supplied label to and from the 
+        # the supplied ID.
         class SparseLabeledVector < SparseVector
             
             # Map keys to the user-defined label.

@@ -160,6 +160,7 @@ $logger.info(" ----- Config block ----- ")
 $config.each { |k,v| $logger.info(" ---- #{k}: #{v}") }
 $logger.info(" ----- End config block ----- ")
 
+# Simple database.
 document_list = []
 
 $config[:urlHashes].each do |url|
