@@ -31,7 +31,7 @@ module SClust
     
     # A second approach to using LDA on documents.
     # This uses the tf-idf value to scale the probability of words being included (B value).
-    module LDA2
+    module LDA
         
         class Topic
             
@@ -40,10 +40,8 @@ module SClust
 
             def initialize()
                 @words     = SClust::Util::SparseVector.new(0) # Hash count of words. Keys are indexes into @wordlist 
-                #@words     = Hash.new(0) # Hash count of words. Keys are indexes into @wordlist 
                 @wordcount = 0  # Sum of values in @words.
                 @docs      = SClust::Util::SparseVector.new(0)
-                #@docs      = Hash.new(0) # Collection of documents. Hash is to eliminate duplicates.
             end
             
             def has_word_and_doc?(word, doc)
@@ -63,7 +61,7 @@ module SClust
             end
         end
         
-        class LDA2
+        class LDA
             
             attr_reader :document_collection
             
@@ -91,7 +89,7 @@ module SClust
                 self.topics = 10
             end
             
-            # Set the topic count and initialize the @topics array with empty SClust::LDA2::Topic instances.
+            # Set the topic count and initialize the @topics array with empty SClust::LDA::Topic instances.
             def topics=(count)
                 @topics = []
                 count.times do |t| 
@@ -112,7 +110,7 @@ module SClust
             end
             
             # If you edit the document collection behind the scenes, you need to run this to avoid
-            # terms with 0 showing up.
+            # terms with 0 termfrequency showing up.
             def rebuild_document_collection()
                 
                 @logger.debug { "Collection now has #{@doclist.size} documents, #{@wordlist.size} words."}
@@ -193,6 +191,8 @@ module SClust
             end
             
             def lda_setup()
+                @logger.info("Setting up to run LDA.")
+
                 @beta  = 0.01 
                 @alpha = 1.0 #( @doclist.size / @topics.length ).to_f
                 
@@ -274,14 +274,10 @@ module SClust
             end
             
             def lda(opts={})
-                opts[:iterations] ||= @iterations
                 
-                unless (opts[:continue])
-                    @logger.info("Setting up to run LDA.")
-                    lda_setup()
-                end
+                lda_setup() unless (opts[:continue])
                 
-                opts[:iterations].times do |i|
+                ( opts[:iterations] or @iterations ).times do |i|
                     @logger.info { "LDA Iteration #{i+1} / #{opts[:iterations]}"}
                     lda_once()
                 end

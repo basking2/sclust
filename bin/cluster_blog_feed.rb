@@ -46,7 +46,7 @@ require 'sclust/util/doccol'
 require 'sclust/util/rss'
 require 'sclust/util/doc'
 require 'sclust/util/filters'
-require 'sclust/lda/lda2'
+require 'sclust/lda/lda'
 
 
 $wwwagent = Mechanize.new()
@@ -146,7 +146,7 @@ $null_filter = SClust::Util::NullFilter.new()
 count = 1
 
 if $config[:lda]
-    clusterer = SClust::LDA2::LDA2.new()    
+    clusterer = SClust::LDA::LDA.new()    
 else
     clusterer = SClust::KMean::DocumentClusterer.new()    
 end

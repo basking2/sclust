@@ -24,7 +24,7 @@
 
 require 'test/unit'
 
-require 'sclust/lda/lda2'
+require 'sclust/lda/lda'
 require 'sclust/util/doc'
 require 'log4r'
 
@@ -46,7 +46,7 @@ class DocTests < Test::Unit::TestCase
     def test_lda_001()
         
         
-        lda = SClust::LDA2::LDA2.new()
+        lda = SClust::LDA::LDA.new()
     
         lda.topics=4
     
