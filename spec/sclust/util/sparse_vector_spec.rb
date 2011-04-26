@@ -22,40 +22,48 @@
 # THE SOFTWARE.
 # 
 
-require 'test/unit'
+require 'sclust/util/sparse_vector'
 
-require 'sclust/sparse_vector'
-
-class ClusterTest < Test::Unit::TestCase
-    
-    def setup()
-    end
-    
-    def teardown()
-    end
-    
-    def test_spvec01()
-        sp = SClust::SparseLabeledVector.new(0)
-        
-        sp[5] = 0
-        sp.store(0, 1, "bye")
-        sp.store(2, 0, "hi")
-        
-        assert(sp[0] == 1, "Could not define value.")
-        
-        assert(sp[1] == 0, "Default value not returned for unknown keys.")
-        
-        assert(sp.length == 1, "Data size was #{sp.length} instead of 1. Assigning default value may have accidentally stored the default value.")
-
-        assert(sp.key_map[0] == "bye", "Could not find map from key 0 to label \"bye\"")        
-
-        assert(sp.label_map["bye"] == 0, "Could not find map from label \"bye\" to key 0")
-
-        sp.delete(0)
-        sp.delete(1)
-        
-        assert(sp[0] == 0, "Default value not returned for deleted key.")
-        
-    end
-
+RSpec.configure do |config|
+  config.expect_with :rspec, :stdlib
 end
+
+describe 'Sparse Vector' do
+
+  context 'a sparse labeled vector' do
+
+    sp = SClust::Util::SparseLabeledVector.new(0)
+
+    sp[5] = 0
+    sp.store(0, 1, "bye")
+    sp.store(2, 0, "hi")
+
+    it 'stored a value at index 0' do
+      sp[0].should == 1
+    end
+
+    it 'should return 0 as the default value for unknown keys.' do
+      sp[1].should == 0
+    end
+        
+    it 'should maintain a size of only stored keys, removing keys when they are set to the default value' do
+      sp.length.should == 1
+    end
+
+    it 'maps key 0 to the label "bye"' do
+      sp.key_map[0].should == "bye"
+    end
+
+    it 'maps "bye" to key 0' do
+      sp.label_map["bye"].should == 0
+    end
+
+    it 'should delete values and then return default values for those keys.' do
+      sp.delete(0)
+      sp.delete(1)
+        
+      sp[0].should == 0
+    end
+        
+  end # context
+end # describe
