@@ -53,3 +53,4 @@ Gem::PackageTask.new(spec) do |pkg|
   # Package customizations 
 end
 
+task :default => [ :spec, :package ]
