@@ -270,7 +270,7 @@ module SClust
                     end
                 end
                 
-                $logger.info { "Topic change rate: #{@topic_change_rate.value} Doc% #{ @doc_prob_avg.value} Word% #{ @word_prob_avg.value}" }
+                @logger.debug { "Topic change rate: #{@topic_change_rate.value} Doc% #{ @doc_prob_avg.value} Word% #{ @word_prob_avg.value}" }
             end
             
             def lda(opts={})
@@ -278,7 +278,7 @@ module SClust
                 lda_setup() unless (opts[:continue])
                 
                 ( opts[:iterations] or @iterations ).times do |i|
-                    @logger.info { "LDA Iteration #{i+1} / #{opts[:iterations]}"}
+                    @logger.debug { "LDA Iteration #{i+1} / #{opts[:iterations]}"}
                     lda_once()
                 end
             end
