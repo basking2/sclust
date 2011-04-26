@@ -33,6 +33,7 @@ spec = Gem::Specification.new do |s|
   end
 
   s.files = Rake::FileList.new('lib/**/*rb').to_a
+  s.files << 'LICENSE.txt'
 
   s.description = <<-EOF
 A k-mean and LDA text clustering library for ruby.
