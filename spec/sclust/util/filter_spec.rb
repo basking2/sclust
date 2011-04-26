@@ -1,4 +1,4 @@
-# 
+#
 # The MIT License
 # 
 # Copyright (c) 2010 Samuel R. Baskinger
@@ -22,27 +22,20 @@
 # THE SOFTWARE.
 # 
 
-require 'test/unit'
-
 require 'sclust/util/filters'
 
-class DocTests < Test::Unit::TestCase
+describe 'document' do
 
-  def setup() end
-  def teardown() end
-
-  def test_docfilter()
+  it 'filter terms out' do
     f = SClust::Util::DocumentTermFilter.new()
 
-    assert( f.apply("aba").original_word == "aba", "did not filter out a.")
+    f.apply("aba").should == "aba"
   end
-  
-  def test_tokenizer()
-      
-      f = SClust::Util::TokenizerFilter.new()
-      
-      assert(f.apply("hi bye") == [ "hi", "bye" ])
-      assert(f.apply("hi \r\n\n\rbye") == [ "hi", "bye" ])
-  end
-end
 
+  it 'tokenizes' do
+    f = SClust::Util::TokenizerFilter.new()
+      
+    f.apply("hi bye").should == [ "hi", "bye" ]
+    f.apply("hi \r\n\n\rbye").should == [ "hi", "bye" ]
+  end
+end # describe 'document'

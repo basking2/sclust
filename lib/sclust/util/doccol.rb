@@ -29,11 +29,10 @@ require 'sclust/util/sparse_vector'
 
 module SClust
     module Util
-        
 
-        # A document collection intended to process text documents and provide term frequencey and
-        # inverse document frequency to SClust::KMean::DocumentClusterer or to
-        # SClust::LDA::LDA
+        # A document collection intended to process text documents and provide 
+        # term frequencey and inverse document frequency to 
+        # SClust::KMean::DocumentClusterer or to SClust::LDA::LDA
         class DocumentCollection 
         
             # terms - a hash were they keys are the terms in the documents and the values stored are the number of documents contiaining the term.
@@ -132,7 +131,7 @@ module SClust
             end
         
             def inverse_document_frequency(term)
-                Math.log( @doclist.length / @terms[term] )
+                Math.log( @doclist.length.to_f / @terms[term].to_f )
             end
         
             alias idf inverse_document_frequency

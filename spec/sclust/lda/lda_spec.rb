@@ -69,21 +69,39 @@ describe 'LDA Document Clustering' do
 
       terms = []
 
-      lda.get_max_terms(100).each do |topic|
+      lda.get_max_terms(3).each do |topic|
         puts("---------- Topic ---------- ")
           
         topic.each do |words|
           puts("\t#{words.weight} - #{words.to_s}")
           terms << words.to_s
         end
-
-        terms = terms[0..2]
-
-        terms.member?('a').should be_true
-        terms.member?('b').should be_true
-        terms.member?('z').should be_true
-
       end
+
+      terms.member?('a').should be_true
+      terms.member?('b').should be_true
+      terms.member?('z').should be_true
+    end
+
+    it 'should cluster in an expected manner 2' do
+
+      lda.topics = 2
+      lda.lda(:iterations=>100)
+
+      terms = []
+
+      lda.get_max_terms(3).each do |topic|
+        puts("---------- Topic ---------- ")
+          
+        topic.each do |words|
+          puts("\t#{words.weight} - #{words.to_s}")
+          terms << words.to_s
+        end
+      end
+
+      terms.member?('a').should be_true
+      terms.member?('b').should be_true
+      terms.member?('z').should be_true
     end
   end # context
 end # describe

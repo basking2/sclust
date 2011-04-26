@@ -1,4 +1,4 @@
-# 
+#
 # The MIT License
 # 
 # Copyright (c) 2010 Samuel R. Baskinger
@@ -25,37 +25,30 @@
 require 'sclust/util/doc'
 require 'sclust/util/doccol'
 require 'sclust/util/filters'
-require 'test/unit'
 
+describe 'doctest' do
 
-class DocTests < Test::Unit::TestCase
-
-  #def setup
-  #end
-
-  #def teardown
-  #end
-
-  def test_builddoc
-    d = SClust::Util::Document.new("hi, this is a nice doc! Yup. Oh? A very nice doc, indeed.")
+  it 'builds a document' do
+    d = SClust::Util::Document.new(
+      "hi, this is a nice doc! Yup. Oh? A very nice doc, indeed.")
 
     d.terms.each do |k,v| 
-      assert(k.original_word != ".", "Period found")
-      assert(k.original_word != "", "Empty term found")
-      #puts("#{k}=#{v}")
+      k.should_not be "."
+      k.should_not be ""
     end 
+  end # it 'builds a document'
+end # describe 'doctest'
 
-  end
+describe 'doccol' do
 
-end
+    it 'contains correct TF / IDF  values' do
 
-class DocCollectionTests < Test::Unit::TestCase
-
-  def test_collectionadd()
     filter = SClust::Util::NullFilter.new()
-    dc = SClust::KMean::DocumentCollection.new()
-    d1 = SClust::Util::Document.new("a b c d d e a q a b", :filter=>filter, :ngrams => [1]) 
-    d2 = SClust::Util::Document.new("a b d e a", :filter=>filter, :ngrams => [1])
+    dc = SClust::Util::DocumentCollection.new()
+    d1 = SClust::Util::Document.new(
+      "a b c d d e a q a b", :filter=>filter, :ngrams => [1]) 
+    d2 = SClust::Util::Document.new(
+      "a b d e a", :filter=>filter, :ngrams => [1])
     d3 = SClust::Util::Document.new("bob", :filter=>filter, :ngrams => [1])
     d4 = SClust::Util::Document.new("frank a", :filter=>filter, :ngrams => [1])
 
@@ -65,15 +58,15 @@ class DocCollectionTests < Test::Unit::TestCase
     dc << d4
 
     dc.terms.each do |k,v|
-	if k == "a"
-	    assert(v == 6, "A appers in #{v} documents out of 4.")
-	    assert(dc.idf("a") > 0.2, "Known value for a")
-	    assert(dc.idf("a") < 0.3, "Known value for a")
-	end
+      if k == "a"
+        v.should == 3
+        dc.idf("a").should > 0.2
+        dc.idf("a").should < 0.3
+      end
     end
 
-    print("TERMS: ")
-    d1.words.each { |w| print "#{w}, " }
-    assert(d1.tf('a') * d1.words.size == 3)
+    #print("TERMS: ")
+    #d1.words.each { |w| print "#{w}, " }
+    ( d1.tf('a') * d1.words.size ).should == 3.0
   end
 end
