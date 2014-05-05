@@ -1,17 +1,16 @@
 require 'rubygems'
 require 'rubygems/package_task'
-require 'rspec/core/rake_task'
-require 'rake/rdoctask'
 require 'ruby-prof/task'
 require 'fileutils'
+require 'rdoc'
+require 'rspec/core/rake_task'
 
 rspec = RSpec::Core::RakeTask.new(:spec)
-
 rspec.rspec_opts = [ ]
 rspec.rspec_opts << '-t ~performance' unless ENV.key? 'PERF'
 rspec.rspec_opts << '-t ~slow'        unless ENV.key? 'SLOW'
 
-Rake::RDocTask.new do |rd|
+RDoc::Task.new do |rd|
   rd.main = "README.rdoc"
   rd.rdoc_files.include("README.rdoc", "lib/**/*.rb")
 end
@@ -22,6 +21,7 @@ spec = Gem::Specification.new do |s|
   s.name = 'sclust'
   s.email = 'basking2@rubyforge.org'
   s.homepage = 'http://sclust.rubyforge.org'
+  s.license = 'MIT'
   s.rubyforge_project = 'http://sclust.rubyforge.org'
   s.author = 'Sam Baskinger'
   s.version = '2.1.1'
@@ -43,11 +43,7 @@ A k-mean and LDA text clustering library for ruby.
   s.add_dependency('stemmer', '>=1.0.1') # Word stemming
   s.add_dependency('nokogiri', '>=1.4.1') # HTML parsing.
 
-  s.add_development_dependency( 'rspec', '>= 2.5.0' )
-  s.add_development_dependency( 'rspec-core', '>= 2.5.1' )
-  s.add_development_dependency( 'rspec-expectations', '>= 2.5.0' )
-  s.add_development_dependency( 'rspec-mocks', '>= 2.5.0' )
-
+  s.add_development_dependency('ruby-prof', '>=0.15.0')
 end
 
 Gem::PackageTask.new(spec) do |pkg|

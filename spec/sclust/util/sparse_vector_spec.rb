@@ -24,9 +24,9 @@
 
 require 'sclust/util/sparse_vector'
 
-RSpec.configure do |config|
-  config.expect_with :rspec, :stdlib
-end
+#RSpec.configure do |config|
+  #config.expect_with :rspec, :stdlib
+#end
 
 describe 'Sparse Vector' do
 
